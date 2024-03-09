@@ -46,8 +46,7 @@ class GameServer:
     def start_server(self):
         self.process = subprocess.Popen(self.get_cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.directory)
         self.console = GameConsole()
-        self.thread = Thread(target=self.read_output, daemon=True)
-        self.thread.start()
+        Thread(target=self.read_output, daemon=True).start()
 
     def send_console_command(self, command):
         # TODO server states, like starting, stopped, running, etc.
