@@ -1,3 +1,8 @@
+# Test folder I use to test code as I go, not unit tests
+test/
+
+# Default values below, probably shouldn't touch these!
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
