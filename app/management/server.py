@@ -40,8 +40,6 @@ class GameServer:
         self.process = None
         self.replacements = self.REPLACEMENTS.copy()
 
-        self.out = ''
-
     def get_cmd(self):
         return utils.get_cmd(self.startup_command, self.replacements)
 
