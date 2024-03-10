@@ -29,11 +29,13 @@ class GameConsole:
 class GameServer:
 
     DEFAULT_STARTUP_CMD = None
+    DEFAULT_STOP_CMD = "^C" # command to send to console to shutdown server, "^C" means to send a SIGTERM
     REPLACEMENTS: dict[str, str] = {}
 
-    def __init__(self, game, startup_command: str, dir):
+    def __init__(self, game, startup_command: str, stop_command: str, dir):
         self.game = game
         self.startup_command = startup_command if startup_command is not None else self.DEFAULT_STARTUP_CMD
+        self.stop_command = stop_command if stop_command is not None else self.DEFAULT_STOP_CMD
         self.directory = dir
         self.process = None
         self.replacements = self.REPLACEMENTS.copy()
@@ -47,6 +49,12 @@ class GameServer:
         self.process = subprocess.Popen(self.get_cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.directory)
         self.console = GameConsole()
         Thread(target=self.read_output, daemon=True).start()
+
+    def stop_server(self):
+        if self.stop_command == "^C":
+            utils.send_ctrl_c(self.process)
+        else:
+            self.send_console_command(self.stop_command)
 
     def send_console_command(self, command):
         # TODO server states, like starting, stopped, running, etc.
