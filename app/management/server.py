@@ -84,9 +84,9 @@ class GameServer:
         self.process = subprocess.Popen(self.get_cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.directory)
         self.console = GameConsole()
         if self.start_indicator:
-            self.console.add_line_listener(self.find_start_indicator)
-        Thread(target=self.read_output, daemon=True).start()
-        Thread(target=self.wait_for_stop, daemon=True).start()
+            self.console.add_line_listener(self._find_start_indicator)
+        Thread(target=self._read_output, daemon=True).start()
+        Thread(target=self._wait_for_stop, daemon=True).start()
 
     def stop_server(self):
         self.status = GameServerStatus.STOPPING
@@ -104,7 +104,7 @@ class GameServer:
         self.process.stdin.write(f"{command}\n".encode("utf8"))
         self.process.stdin.flush()
 
-    def read_output(self):
+    def _read_output(self):
         """
         Constantly monitors the stdout of the subprocess, and adds it to the server's console object.
         Will block until the program exits, only call on another thread.
@@ -117,7 +117,7 @@ class GameServer:
         # TODO could a program terminate before writing eof and cause some output to not get captured?
         # seems unlikely but if i encounter problems i'll add some code here to capture left over output
             
-    def wait_for_stop(self):
+    def _wait_for_stop(self):
         """
         Blocks until the subprocess exits, then sets the status to stopped.
         Also will handle crashes if the server is not set to STOPPING when it exits.
@@ -128,7 +128,7 @@ class GameServer:
             print("server crash detected!")
         self.status = GameServerStatus.STOPPED
 
-    def find_start_indicator(self, line):
+    def _find_start_indicator(self, line):
         """
         Looks for the start indicator in `line`.
         Used as console line listener, and doesn't handle special cases like the indicator being `None` or an empty string.
@@ -136,4 +136,4 @@ class GameServer:
         if self.start_indicator not in line:
             return
         self.status = GameServerStatus.RUNNING
-        self.console.listeners.remove(self.find_start_indicator)
+        self.console.listeners.remove(self._find_start_indicator)
