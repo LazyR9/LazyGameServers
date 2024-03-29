@@ -89,8 +89,8 @@ class GameServer:
         self.replacements = self.REPLACEMENTS.copy()
         self.status = GameServerStatus.STOPPED
 
-        # remember all custom data so it can be stored later
         self.custom_data = kwargs
+        # remember all custom data so it can be accessed later
         self.init(**kwargs)
 
     def init(self, **kwargs):
