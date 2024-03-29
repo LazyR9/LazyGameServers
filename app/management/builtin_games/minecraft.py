@@ -2,14 +2,21 @@ from app.management.server import GameServer
 
 class MinecraftServer(GameServer):
 
-    DEFAULT_STARTUP_CMD = "java -Xmx{MAX_RAM}M -jar {JARFILE} nogui"
+    DEFAULT_STARTUP_CMD = "java -Xmx{MAX_RAM}M -jar {SERVER_JAR} nogui"
     DEFAULT_STOP_CMD = "stop"
     DEFAULT_START_INDICATOR = "For help, type"
     REPLACEMENTS = {
-        "JARFILE": "server.jar",
+        "SERVER_JAR": "server.jar",
         "MAX_RAM": "2048"
     }
 
-    # TODO have figure out init args, just kinda setting them all to None by default
-    def __init__(self, startup_command = None, stop_command = None, start_indicator = None, dir = None):
-        super().__init__("minecraft", startup_command, stop_command, start_indicator, dir)
+    SHARED_FILES = ["servarjars"]
+
+    def init(self, server_jar, max_ram, **kwargs):
+        self.server_jar = server_jar
+        self.max_ram = max_ram
+        
+    def setup(self):
+        self.add_shared_file(self.server_jar, "serverjars")
+        self.add_shared_file("libraries", "serverjars")
+        

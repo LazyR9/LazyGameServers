@@ -62,6 +62,21 @@ class GameServer:
     SHARED_FILES = []
 
     def __init__(self, id, game, storage_manager: StorageManager, startup_command: str = None, stop_command: str = None, start_indicator: str = None, **kwargs):
+        """
+        Creates a new server object.
+        
+        THIS SHOULD NOT BE CALLED OR OVERRIDDEN!
+        A `ServerManager` instance should be used to get existing servers or create new ones.
+        The `init()` function should be used if extra processing should be done when the object is created,
+        as it only takes extra data and won't need to be updated, unlike this function whose parameters might change.
+
+        :param id: The ID to use for this server.
+        :param game: The game identifier of this server
+        :param storage_manager: The StorageManager this server should use to get files
+        :param startup_command: The command to use to start the server, defaults to the class attribute of the same name
+        :param stop_command: The input to send to the stdin of the process, defaults to the class attribute of the same name
+        :param start_indicator: What text to look for in the output that signals that the server is fully started, defaults to the class attribute of the same name
+        """
         self.id = id
         self.game = game
         self.storage_manager = storage_manager
@@ -73,6 +88,30 @@ class GameServer:
         self.process = None
         self.replacements = self.REPLACEMENTS.copy()
         self.status = GameServerStatus.STOPPED
+
+        # remember all custom data so it can be stored later
+        self.custom_data = kwargs
+        self.init(**kwargs)
+
+    def init(self, **kwargs):
+        """
+        Do any extra setup on this object. This is called at the end of `__init__()`.
+        
+        This function serves as an easier way to initalize custom fields,
+        as it takes no args and doesn't need to call super() because the base class does nothing.
+        `kwargs` is everything in `custom_data`.
+        This is useful for having named parameters instead of refering to a value using a string.
+        """
+
+    def setup(self):
+        """
+        Does first time setup on this server.
+        Usually should only be called the first time the server is created,
+        not when the object is created.
+
+        For example, this could be adding required downloads from shared storage,
+        or download other files needed to run the server.
+        """
 
     def get_cmd(self):
         """
@@ -127,6 +166,23 @@ class GameServer:
 
     def remove_shared_file(self, file):
         self.storage_manager.remove_shared_file_from_server(self, file)
+
+    def as_dict(self):
+        data = {
+            "id": self.id,
+            "game": self.game,
+            "startup_cmd": self.startup_command,
+            "stop_cmd": self.stop_command,
+            "start_indicator": self.start_indicator,
+        }
+        for key, item in self.custom_data.items():
+            if key in data:
+                # TODO what to do when keys collide? can't happen through loading a config file
+                # but could happen if a key is set through a script
+                print("custom data trying to override builtin data!")
+                continue
+            data[key] = item
+        return data
 
     def _read_output(self):
         """
