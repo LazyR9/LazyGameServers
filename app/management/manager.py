@@ -37,6 +37,18 @@ class ServerManager:
                     continue
                 classes.append(obj)
         return classes
+    
+    @classmethod
+    def load_builtin_games(cls):
+        # TODO this works but idk if this is the best way to do this or what a better way would be...
+        cls.CLASSES = cls.load_classes(os.path.join(os.path.dirname(__file__), "builtin_games"))
+
+    @classmethod
+    def get_class(cls, class_name):
+        for class_ in cls.CLASSES:
+            if class_.__name__ == class_name:
+                return class_
+        return None
         
     def __init__(self, dir='.', storage_manager = None, ):
         self.dir = dir
@@ -107,6 +119,9 @@ class ServerManager:
             except yaml.YAMLError as error:
                 print("Error reading settings.yml:", error)
 
+        for game, class_ in settings['class_map'].items():
+            self.register_class(game, self.get_class(class_), True)
+
     def save_settings(self):
         with open(self.settings_yaml, "w") as file:
             yaml.safe_dump({"class_map": {k: v.__name__ for k, v in self.class_map.items()}}, file)
@@ -117,7 +132,6 @@ class ServerManager:
                 servers = yaml.safe_load(file)
             except yaml.YAMLError as error:
                 print("Error reading servers.yml:", error)
-        print(servers)
         for server in servers:
             self.create_server_obj(**server)
 
