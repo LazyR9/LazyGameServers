@@ -105,6 +105,8 @@ class GameServer:
         self.custom_data = self.CUSTOM_DATA.copy()
         self.status = GameServerStatus.STOPPED
 
+        self.ensure_directory()
+
         # remember all custom data so it can be accessed later
         self.custom_data.update(kwargs)
         self.init(**kwargs)
@@ -205,6 +207,14 @@ class GameServer:
                 continue
             data[key] = item
         return data
+    
+    def ensure_directory(self):
+        try:
+            self.storage_manager.create_server_folder(self)
+        except FileExistsError:
+            # aparently catching errors is better than checking when it comes to files
+            # however, the function being called checks instead of catching exception so...
+            pass
 
     def _read_output(self):
         """
