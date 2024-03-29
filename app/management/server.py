@@ -57,12 +57,13 @@ class GameServer:
     DEFAULT_START_INDICATOR = None
     REPLACEMENTS: dict[str, str] = {}
 
-    def __init__(self, game, startup_command: str, stop_command: str, start_indicator: str, dir):
+    def __init__(self, id, game, storage_manager: StorageManager, startup_command: str = None, stop_command: str = None, start_indicator: str = None, **kwargs):
         self.game = game
+        self.storage_manager = storage_manager
+
         self.startup_command = startup_command if startup_command is not None else self.DEFAULT_STARTUP_CMD
         self.stop_command = stop_command if stop_command is not None else self.DEFAULT_STOP_CMD
         self.start_indicator = start_indicator if start_indicator is not None else self.DEFAULT_START_INDICATOR
-        self.directory = dir
 
         self.process = None
         self.replacements = self.REPLACEMENTS.copy()
@@ -81,7 +82,7 @@ class GameServer:
         Spawns the server subprocess and run threads to monitor it.
         """
         self.status = GameServerStatus.STARTING if self.start_indicator is not None else GameServerStatus.RUNNING
-        self.process = subprocess.Popen(self.get_cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.directory)
+        self.process = subprocess.Popen(self.get_cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.get_directory())
         self.console = GameConsole()
         if self.start_indicator:
             self.console.add_line_listener(self._find_start_indicator)
@@ -104,6 +105,24 @@ class GameServer:
         self.process.stdin.write(f"{command}\n".encode("utf8"))
         self.process.stdin.flush()
 
+    # convenience functions to the StorageManager
+    def get_directory(self):
+        """
+        Gets the directory this server lives in from the storage manager.
+        """
+        return self.storage_manager.get_server_folder(self)
+    
+    def get_file(self, file):
+        return self.storage_manager.get_file_from_server(self, file)
+
+    def add_shared_file(self, file, bin, game = None, dest_name = None):
+        if game is None:
+            game = self.game
+        self.storage_manager.add_shared_file_to_server(game, bin, file, self, dest_name)
+
+    def remove_shared_file(self, file):
+        self.storage_manager.remove_shared_file_from_server(self, file)
+
     def _read_output(self):
         """
         Constantly monitors the stdout of the subprocess, and adds it to the server's console object.
@@ -120,7 +139,7 @@ class GameServer:
     def _wait_for_stop(self):
         """
         Blocks until the subprocess exits, then sets the status to stopped.
-        Also will handle crashes if the server is not set to STOPPING when it exits.
+        Also will handle crashes if the server is not set to `STOPPING` when it exits.
         """
         self.process.wait()
         if self.status != GameServerStatus.STOPPING:
