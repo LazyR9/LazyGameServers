@@ -47,6 +47,19 @@ class GameConsole:
 class GameServer:
 
     # these are defaults for the class, the lowercase versions are instance specific
+    # TODO python copies these class attributes to each instance,
+    # so that each instance's value can differ from the class.
+    # For example,
+    #####
+    # >>> class MyClass:
+    # >>>   SOME_VALUE = 'default'
+    # >>> x = MyClass()
+    # >>> x.SOME_VALUE = 'something else'
+    # >>> MyClass.SOME_VALUE != x.SOME_VALUE
+    # False
+    #####
+    # so would just using a class default as the attribute work?
+    # should it be capital?
 
     # command line command to start server
     DEFAULT_STARTUP_CMD = None
@@ -56,10 +69,13 @@ class GameServer:
     # if the start_indicator is None, this server doesn't have a way to know when it is done starting.
     # this can also be an empty string to indicate that the status will be set manually, like through a plugin or mod.
     DEFAULT_START_INDICATOR = None
-    REPLACEMENTS: dict[str, str] = {}
+
+    # default values for extra data can be specified here
+    CUSTOM_DATA: dict[str, str] = {}
+    REPLACEMENTS: list[str] = []
 
     # name of folders that hold other files and folders to be shared across server instances
-    SHARED_FILES = []
+    BINS = []
 
     def __init__(self, id, game, storage_manager: StorageManager, startup_command: str = None, stop_command: str = None, start_indicator: str = None, **kwargs):
         """
@@ -86,11 +102,11 @@ class GameServer:
         self.start_indicator = start_indicator if start_indicator is not None else self.DEFAULT_START_INDICATOR
 
         self.process = None
-        self.replacements = self.REPLACEMENTS.copy()
+        self.custom_data = self.CUSTOM_DATA.copy()
         self.status = GameServerStatus.STOPPED
 
-        self.custom_data = kwargs
         # remember all custom data so it can be accessed later
+        self.custom_data.update(kwargs)
         self.init(**kwargs)
 
     def init(self, **kwargs):
@@ -119,7 +135,13 @@ class GameServer:
 
         Anything in curly braces will get replaced by the corresponding value in `replacements`.
         """
-        return utils.get_cmd(self.startup_command, self.replacements)
+        return utils.get_cmd(self.startup_command, self.get_replacements())
+    
+    def get_replacements(self):
+        # create a copy of custom data, as long as the key is in the whitelist.
+        # it also allows values that don't appear in the default custom data list,
+        # in case extra custom data is specified that needs to be replaced.
+        return {k: v for k, v in self.custom_data.items() if k in self.__class__.REPLACEMENTS or k not in self.__class__.CUSTOM_DATA}
 
     def start_server(self):
         """

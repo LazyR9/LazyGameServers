@@ -5,12 +5,13 @@ class MinecraftServer(GameServer):
     DEFAULT_STARTUP_CMD = "java -Xmx{MAX_RAM}M -jar {SERVER_JAR} nogui"
     DEFAULT_STOP_CMD = "stop"
     DEFAULT_START_INDICATOR = "For help, type"
-    REPLACEMENTS = {
-        "SERVER_JAR": "server.jar",
-        "MAX_RAM": "2048"
+    CUSTOM_DATA = {
+        "server_jar": "server.jar",
+        "max_ram": "2048",
     }
+    REPLACEMENTS = ["server_jar", "max_ram"]
 
-    SHARED_FILES = ["servarjars"]
+    BINS = ["servarjars"]
 
     def init(self, server_jar, max_ram, **kwargs):
         self.server_jar = server_jar
