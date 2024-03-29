@@ -4,6 +4,7 @@ from typing import Callable
 from enum import Enum, auto
 
 from app import utils
+from app.management.storage import StorageManager
 
 # TODO this can support anything that is run through the command line,
 # should i be naming everything with "Game"? 
@@ -57,7 +58,11 @@ class GameServer:
     DEFAULT_START_INDICATOR = None
     REPLACEMENTS: dict[str, str] = {}
 
+    # name of folders that hold other files and folders to be shared across server instances
+    SHARED_FILES = []
+
     def __init__(self, id, game, storage_manager: StorageManager, startup_command: str = None, stop_command: str = None, start_indicator: str = None, **kwargs):
+        self.id = id
         self.game = game
         self.storage_manager = storage_manager
 
