@@ -1,0 +1,26 @@
+.hover:hover {
+    background-color: rgba(255, 255, 255, 10%);
+}
+
+.align-children-center > * {
+    align-content: center;
+}
+
+/* above the sm breakpoint */
+@media (min-width: 576px) {
+    .row.seperate-cells > *:not(:first-child) {
+        border-left: 1px solid rgba(255, 255, 255, 10%);
+    }
+}
+
+/* below the sm breakpoint */
+@media (max-width: 575.98px) {
+    .row.seperate-cells > *:not(:first-child) {
+        border-top: 1px solid rgba(255, 255, 255, 10%);
+    }
+
+    .row.hover > * {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+}
