@@ -1,4 +1,5 @@
 import subprocess
+import psutil
 from threading import Thread
 from typing import Callable
 from enum import Enum, auto
@@ -56,7 +57,7 @@ class GameServer:
     # >>> x = MyClass()
     # >>> x.SOME_VALUE = 'something else'
     # >>> MyClass.SOME_VALUE != x.SOME_VALUE
-    # False
+    # True
     #####
     # so would just using a class default as the attribute work?
     # should it be capital?
@@ -102,6 +103,7 @@ class GameServer:
         self.start_indicator = start_indicator if start_indicator is not None else self.DEFAULT_START_INDICATOR
 
         self.process = None
+        self.psutil = None
         self.custom_data = self.CUSTOM_DATA.copy()
         self.status = GameServerStatus.STOPPED
 
@@ -151,6 +153,7 @@ class GameServer:
         """
         self.status = GameServerStatus.STARTING if self.start_indicator is not None else GameServerStatus.RUNNING
         self.process = subprocess.Popen(self.get_cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.get_directory())
+        self.ps = psutil.Process(self.process.pid)
         self.console = GameConsole()
         if self.start_indicator:
             self.console.add_line_listener(self._find_start_indicator)
@@ -198,6 +201,7 @@ class GameServer:
             "startup_cmd": self.startup_command,
             "stop_cmd": self.stop_command,
             "start_indicator": self.start_indicator,
+            "stats": self.get_stats()
         }
         for key, item in self.custom_data.items():
             if key in data:
@@ -207,6 +211,14 @@ class GameServer:
                 continue
             data[key] = item
         return data
+    
+    def get_stats(self):
+        return {
+            "cpu": self.ps.cpu_percent() if self.status != GameServerStatus.STOPPED else 0,
+            "memory": 2_500_000,
+            "players": 4,
+            "max_players": 10,
+        }
     
     def ensure_directory(self):
         try:
