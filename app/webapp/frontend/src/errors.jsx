@@ -1,17 +1,31 @@
 import { useRouteError } from "react-router-dom";
 
-export default function ErrorPage() {
+export class ResponseError extends Error {
+  constructor(response) {
+    console.log(response)
+    super(response.statusText);
+    this.response = response;
+  }
+}
+
+export default function ErrorPage({ title, subtitle, message, children }) {
   const error = useRouteError();
-  console.error(error);
+  if (error) console.error(error);
+
+  const errorMessage = message || error?.statusText || error?.message;
 
   return (
     <div id="error-page">
-      <h1>Oops!</h1>
-      <p>Sorry, an unexpected error has occurred.</p>
-      <p>TODO better error page</p>
-      <p>
-        <i>{error.statusText || error.message}</i>
-      </p>
+      {children || <>
+        <h1>{title || "Error!"}</h1>
+        <p>{subtitle || "Sorry, an unexpected error has occurred."}</p>
+      </>}
+      {errorMessage && <>
+        <p className="m-0">The details of the error are below:</p>
+        <p>
+          <code>{errorMessage}</code>
+        </p>
+      </>}
     </div>
   );
 }

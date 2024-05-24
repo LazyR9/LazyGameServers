@@ -14,21 +14,43 @@ import Dashboard from './routes/dashboard';
 
 import './index.css';
 
+// TODO seperate some sub-routes into seperate files because this will probably get really big otherwise
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Root />,
-    errorElement: <ErrorPage />,
     children: [
       {
-        path: "/server/:serverId",
-        element: <Server />
+        errorElement: <ErrorPage />,
+        // TODO better way to handle nested path with common prefix? can't use children because that would render all elements above it...
+        children: [
+          {
+            path: "servers",
+            element: <Dashboard />,
+          },
+          {
+            path: "servers/:type",
+            element: <div>nothing here...</div>,
+          },
+          {
+            path: "servers/:type/:serverId",
+            element: <Server />
+          },
+          {
+            path: "dashboard",
+            element: <Dashboard />
+          },
+          {
+            path: "signin",
+            element: <p>No actual sign in page yet...</p>
+          },
+          {
+            path: "*",
+            element: <ErrorPage title="Page not Found" subtitle="That page doesn't seem to exist. Let me check the back." />
+          }
+        ]
       },
-      {
-        path: "/dashboard",
-        element: <Dashboard />
-      }
-    ]
+    ],
   },
 ])
 

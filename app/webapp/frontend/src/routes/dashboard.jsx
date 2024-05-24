@@ -2,6 +2,7 @@ import Card from 'react-bootstrap/Card';
 import CardText from 'react-bootstrap/CardText';
 import Badge from 'react-bootstrap/Badge';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 
 import { formatBytes } from '../utils';
 
@@ -36,19 +37,31 @@ export function ServerList() {
   // currently they use a unique game and id combo
   return (
     <div className='mx-3'>
-      {servers.map((server) => (
-        <div key={server.game + ':' + server.id} className='row hover seperate-cells rounded text-center py-2'>
-          <div className="col-sm-2"><p className='h5 d-inline-block mb-0'>{server.id}</p> <Badge bg='secondary'>{server.game}</Badge></div>
-          <div className="col-sm">
-            <div className="row align-children-center">
-              <div className="col">Players: <span className='text-nowrap'>{server.players} / {server.max_players}</span></div>
-              <div className="col">CPU Usage: {server.cpu}%</div>
-              <div className="col">Memory Usage: {formatBytes(server.memory)}</div>
-            </div>
-          </div>
-          <div className="col-sm-2">this is a description</div>
+      {servers.map((server) => <ServerListItem server={server} key={server.game + ':' + server.id} />)}
+    </div>
+  );
+}
+
+export function ServerListItem({ server }) {
+  return (
+    <Link className='undo-a-tag' to={`/servers/${encodeURIComponent(server.game)}/${server.id}`}>
+      <div className='row hover seperate-cells rounded text-center py-2'>
+        <div className="col-sm-2"><p className='h5 d-inline-block mb-0'>{server.id}</p> <Badge bg='secondary'>{server.game}</Badge></div>
+        <div className="col-sm">
+          <ServerListItemStats stats={server.stats} />
         </div>
-      ))}
+        <div className="col-sm-2">this is a description</div>
+      </div>
+    </Link>
+  )
+}
+
+export function ServerListItemStats({ stats }) {
+  return (
+    <div className="row align-children-center">
+      <div className="col">Players: <span className='text-nowrap'>{stats.players} / {stats.max_players}</span></div>
+      <div className="col">CPU Usage: {stats.cpu}%</div>
+      <div className="col">Memory Usage: {formatBytes(stats.memory)}</div>
     </div>
   );
 }

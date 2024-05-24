@@ -1,0 +1,37 @@
+.navbar .nav-link.active {
+    background-color: #00000033;
+}
+
+.navbar .nav-link:hover {
+    background-color: #00000022;
+}
+
+.navbar .nav-link {
+    margin-right: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+a.undo-a-tag {
+    color: inherit;
+    text-decoration: inherit;
+}
+
+/* TODO move this to its own file */
+.console {
+    background-color: #0c0c0c;
+    padding: 0.5rem;
+    width: 100%;
+    height: calc(20lh + 1rem); /* Add the padding on */
+    display: block;
+    font-family: var(--bs-font-monospace);
+    overflow: auto;
+    margin-bottom: 1rem;
+}
+
+.console-line-error {
+    color: #ee0000
+}
+
+.tab-pane {
+    padding: 1rem;
+}
