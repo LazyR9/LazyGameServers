@@ -25,7 +25,15 @@ a.undo-a-tag {
     display: block;
     font-family: var(--bs-font-monospace);
     overflow: auto;
-    margin-bottom: 1rem;
+    white-space: pre;
+}
+
+.console-wrapper input {
+    border-top-left-radius: 0;
+}
+
+.console-wrapper button {
+    border-top-right-radius: 0;
 }
 
 .console-line-error {
@@ -34,4 +42,36 @@ a.undo-a-tag {
 
 .tab-pane {
     padding: 1rem;
+}
+
+.indicator {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 0.5rem;
+}
+
+.indicator.stopped {
+    background-color: red;
+}
+
+.indicator.starting {
+    background-color: limegreen;
+    animation: blink 1s step-start infinite;
+}
+
+.indicator.running {
+    background-color: limegreen;
+}
+
+.indicator.stopping {
+    background-color: red;
+    animation: blink 1s step-start infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
 }

@@ -7,7 +7,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 import Root from './root';
-import ErrorPage from './errors';
+import ErrorPage, { ResponseError } from './errors';
 
 import Server from './routes/server';
 import Dashboard from './routes/dashboard';
@@ -54,7 +54,17 @@ const router = createBrowserRouter([
   },
 ])
 
-const query = new QueryClient();
+const query = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // This function stops retries from happening if it was a bad response,
+      // for example a 404 or 500, but the actual request succeeded
+      retry: (failureCount, error) => {
+        return !(error instanceof ResponseError || failureCount >= 2);
+      }
+    }
+  }
+});
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

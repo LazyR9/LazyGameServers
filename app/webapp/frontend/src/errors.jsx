@@ -2,8 +2,8 @@ import { useRouteError } from "react-router-dom";
 
 export class ResponseError extends Error {
   constructor(response) {
-    console.log(response)
-    super(response.statusText);
+    const url = new URL(response.url);
+    super(`Got response "${response.status} ${response.statusText}" from ${url.pathname}`);
     this.response = response;
   }
 }

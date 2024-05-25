@@ -1,12 +1,12 @@
 import Card from 'react-bootstrap/Card';
 import CardText from 'react-bootstrap/CardText';
 import Badge from 'react-bootstrap/Badge';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 
 import { formatBytes } from '../utils';
 
 import './dashboard.css';
+import { useFetchQuery } from '../querys';
 
 export default function Dashboard() {
   return (
@@ -18,11 +18,9 @@ export default function Dashboard() {
 }
 
 export function ServerList() {
-  const { isPending, isError, data: servers, error } = useQuery({
+  const { isPending, isError, data: servers, error } = useFetchQuery({
     queryKey: ['servers'],
-    queryFn: async () => {
-      return await fetch('/api/servers').then(res => res.json());
-    }
+    apiEndpoint: '/api/servers',
   });
 
   if (isPending) {
