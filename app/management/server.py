@@ -3,6 +3,7 @@ import psutil
 from threading import Thread
 from typing import Callable
 from enum import Enum, auto
+import datetime
 
 from app import utils
 from app.management.storage import StorageManager
@@ -17,10 +18,23 @@ class GameServerStatus(Enum):
     RUNNING = auto()
     STOPPING = auto()
 
+class GameConsoleLine:
+    def __init__(self, line: str, error: bool = False, timestamp: datetime.datetime = None):
+        self.timestamp = timestamp or datetime.datetime.now(datetime.timezone.utc)
+        self.line = line
+        self.error = error
+
+    def as_dict(self):
+        return {
+            "line": self.line,
+            "error": self.error,
+            "timestamp": self.timestamp.isoformat(),
+        }
+
 class GameConsole:
     def __init__(self):
-        self.lines = []
-        self.listeners: list[Callable[[str]]] = []
+        self.lines: list[GameConsoleLine] = []
+        self.listeners: list[Callable[[GameConsoleLine]]] = []
 
     def add_line_listener(self, listener):
         """
@@ -29,17 +43,26 @@ class GameConsole:
         """
         self.listeners.append(listener)
 
-    def add_line(self, line):
-        self.lines.append(line)
+    def add_line(self, line, error = False):
+        self.lines.append(GameConsoleLine(line, error))
         # Make a copy so changing the original list doesn't break the loop
         for listener in self.listeners[:]:
             listener(line)
+
+    def as_dict(self):
+        return {
+            "lines": [line.as_dict() for line in self.lines],
+        }
+    
+    def clear(self):
+        self.lines.clear()
+        # TODO listener for when console is cleared?
 
     def get_str(self):
         """
         Concatenates all lines of output into one string.
         """
-        return ''.join(self.lines)
+        return ''.join([line.line for line in self.lines])
 
     def print(self):
         print(self.get_str())
@@ -106,6 +129,7 @@ class GameServer:
         self.psutil = None
         self.custom_data = self.CUSTOM_DATA.copy()
         self.status = GameServerStatus.STOPPED
+        self.console = GameConsole()
 
         self.ensure_directory()
 
@@ -154,10 +178,12 @@ class GameServer:
         self.status = GameServerStatus.STARTING if self.start_indicator is not None else GameServerStatus.RUNNING
         self.process = subprocess.Popen(self.get_cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.get_directory())
         self.ps = psutil.Process(self.process.pid)
-        self.console = GameConsole()
+        self.console.clear()
         if self.start_indicator:
             self.console.add_line_listener(self._find_start_indicator)
-        Thread(target=self._read_output, daemon=True).start()
+        # One thread monitors stdout, and the other monitors stderr
+        Thread(target=self._read_output, args=(True, ), daemon=True).start()
+        Thread(target=self._read_output, args=(False,), daemon=True).start()
         Thread(target=self._wait_for_stop, daemon=True).start()
 
     def stop_server(self):
@@ -201,7 +227,9 @@ class GameServer:
             "startup_cmd": self.startup_command,
             "stop_cmd": self.stop_command,
             "start_indicator": self.start_indicator,
-            "stats": self.get_stats()
+            # TODO should the status be under stats?
+            "status": self.status.name,
+            "stats": self.get_stats(),
         }
         for key, item in self.custom_data.items():
             if key in data:
@@ -228,16 +256,17 @@ class GameServer:
             # however, the function being called checks instead of catching exception so...
             pass
 
-    def _read_output(self):
+    def _read_output(self, error = False):
         """
         Constantly monitors the stdout of the subprocess, and adds it to the server's console object.
         Will block until the program exits, only call on another thread.
         """
+        output = self.process.stderr if error else self.process.stdout
         while self.process.poll() is None:
-            line = self.process.stdout.readline().decode("utf8")
+            line = output.readline().decode("utf8")
             if not line: # an empty line means eof, happens when a program writes eof before actually termainating
                 break
-            self.console.add_line(line)
+            self.console.add_line(line, error)
         # TODO could a program terminate before writing eof and cause some output to not get captured?
         # seems unlikely but if i encounter problems i'll add some code here to capture left over output
             
