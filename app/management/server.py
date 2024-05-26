@@ -44,10 +44,11 @@ class GameConsole:
         self.listeners.append(listener)
 
     def add_line(self, line, error = False):
-        self.lines.append(GameConsoleLine(line, error))
+        console_line = GameConsoleLine(line, error)
+        self.lines.append(console_line)
         # Make a copy so changing the original list doesn't break the loop
         for listener in self.listeners[:]:
-            listener(line)
+            listener(console_line)
 
     def as_dict(self):
         return {
@@ -281,12 +282,12 @@ class GameServer:
             print("server crash detected!")
         self.status = GameServerStatus.STOPPED
 
-    def _find_start_indicator(self, line):
+    def _find_start_indicator(self, line: GameConsoleLine):
         """
         Looks for the start indicator in `line`.
         Used as console line listener, and doesn't handle special cases like the indicator being `None` or an empty string.
         """
-        if self.start_indicator not in line:
+        if self.start_indicator not in line.line:
             return
         self.status = GameServerStatus.RUNNING
         self.console.listeners.remove(self._find_start_indicator)

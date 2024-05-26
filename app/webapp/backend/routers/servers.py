@@ -12,8 +12,7 @@ router.include_router(serverRouter)
 
 # TODO move these to their own file (models.py or schemas.py or something)
 class ServerStats(BaseModel, extra='allow'):
-    # TODO should cpu usage be an int percentage or just a 0-1 float?
-    cpu: int
+    cpu: float
     memory: int
 
 class Server(BaseModel, extra='allow'):
