@@ -3,12 +3,39 @@ import { Badge, Button, ButtonGroup, Form, OverlayTrigger, Placeholder, Tab, Tab
 import ErrorPage, { ResponseError } from "../errors";
 import ServerConsole from "../components/Console";
 import { useFetchQuery } from "../querys";
+import { useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Server() {
   const { type, serverId } = useParams();
   const apiEndpoint = `/api/servers/${encodeURIComponent(type)}/${serverId}`;
 
-  const { isPending, isError, data: server, error } = useFetchQuery({queryKey: ["servers", type, serverId], apiEndpoint});
+  const queryKey = useMemo(() => ["servers", type, serverId], [type, serverId]);
+  const { isPending, isError, data: server, error } = useFetchQuery({ queryKey, apiEndpoint });
+
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const eventSource = new EventSource(apiEndpoint + "/stream");
+
+    eventSource.addEventListener("console_line", (event) => {
+      queryClient.setQueryData([...queryKey, "console"], (data) => ({
+        ...data,
+        lines: [
+          ...(data?.lines ?? []),
+          JSON.parse(event.data),
+        ]
+      }));
+    });
+
+    eventSource.addEventListener("status", (event) => {
+      queryClient.setQueryData(queryKey, (data) => ({
+        ...data,
+        status: JSON.parse(event.data).status,
+      }))
+    })
+    return () => eventSource.close();
+  }, [apiEndpoint, queryKey, queryClient]);
 
   if (isError) {
     if (error instanceof ResponseError && error.response.status === 404) {

@@ -155,7 +155,7 @@ class GameServer:
         not when the object is created.
 
         For example, this could be adding required downloads from shared storage,
-        or download other files needed to run the server.
+        or downloading other files needed to run the server.
         """
 
     def get_cmd(self):
@@ -175,7 +175,10 @@ class GameServer:
     def start_server(self):
         """
         Spawns the server subprocess and run threads to monitor it.
+        Returns True if the server started, False if it was already running.
         """
+        if self.status != GameServerStatus.STOPPED:
+            return False
         self.status = GameServerStatus.STARTING if self.start_indicator is not None else GameServerStatus.RUNNING
         self.process = subprocess.Popen(self.get_cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.get_directory())
         self.ps = psutil.Process(self.process.pid)
@@ -186,6 +189,7 @@ class GameServer:
         Thread(target=self._read_output, args=(True, ), daemon=True).start()
         Thread(target=self._read_output, args=(False,), daemon=True).start()
         Thread(target=self._wait_for_stop, daemon=True).start()
+        return True
 
     def stop_server(self):
         self.status = GameServerStatus.STOPPING

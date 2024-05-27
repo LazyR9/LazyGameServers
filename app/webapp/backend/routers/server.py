@@ -53,24 +53,26 @@ MESSAGE_STREAM_RETRY_TIMEOUT = 15000 # in milliseconds
 @router.get('/console/stream')
 async def console_stream(server: ServerDependency, request: Request):
     async def event_generator():
-        lines = []
+        events = []
         def add_line(line: GameConsoleLine):
-            lines.append(line)
+            events.append(line)
         server.console.add_line_listener(add_line)
+        last_status = server.status
         while True:
             if await request.is_disconnected():
                 # TODO add way to remove listeners besides just directly modifying the list
                 server.console.listeners.remove(add_line)
                 break
 
-            while lines:
-                line = lines.pop(0)
+            if last_status != server.status:
+               events.append({"event": "status", "data": json.dumps({"status": server.status.name})})
+
+            while events:
+                event = events.pop(0)
                 yield {
-                    "event": "message",
-                    "id": line.timestamp.isoformat(), # TODO timestamp probably isn't the best way to id this
+                    # TODO does this event need to have an id field?
                     "retry": MESSAGE_STREAM_RETRY_TIMEOUT,
-                    # need to dump to json manually
-                    "data": json.dumps(line.as_dict())
+                    **event
                 }
 
             await asyncio.sleep(MESSAGE_STREAM_DELAY)

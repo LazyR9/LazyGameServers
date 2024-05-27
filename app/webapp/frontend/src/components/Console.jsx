@@ -1,7 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Button, Form, InputGroup } from "react-bootstrap";
 import { useFetchQuery } from "../querys";
-import { useQueryClient } from "@tanstack/react-query";
 
 export default function ServerConsole({ type, serverId }) {
   const [enteredCmd, setEnteredCmd] = useState("");
@@ -10,25 +9,10 @@ export default function ServerConsole({ type, serverId }) {
 
   const queryKey = useMemo(() => ["servers", type, serverId, "console"], [type, serverId]);
 
-  const { isPending, data: serverConsole } = useFetchQuery({
+  const { isSuccess, data: serverConsole } = useFetchQuery({
     queryKey,
     apiEndpoint,
   });
-
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const eventSource = new EventSource(apiEndpoint + "/stream");
-    eventSource.addEventListener("message", (event) => {
-      queryClient.setQueryData(queryKey, (data) => ({
-        lines: [
-          ...data.lines,
-          JSON.parse(event.data)
-        ]
-      }));
-    })
-    return () => eventSource.close();
-  }, [apiEndpoint, queryKey, queryClient]);
 
   const ref = useRef();
 
@@ -40,9 +24,10 @@ export default function ServerConsole({ type, serverId }) {
   return (
     <div className="console-wrapper">
       <div className="console rounded-top" ref={ref}>
-        {isPending || serverConsole.lines.map((value, index) => (
-          <div key={index} className={value.error ? "console-line-error" : undefined}>{value.line}</div>)
-        )}
+        {isSuccess && serverConsole.lines.map((value, index) => (
+          // TODO actually color lines instead of just stripping color
+          <div key={index} className={value.error ? "console-line-error" : undefined}>{value.line.replace(/\033\[(.*?)m/g, "")}</div>
+        ))}
       </div>
       <Form className="list-group-item"
         onSubmit={(event) => {
