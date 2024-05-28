@@ -6,7 +6,7 @@ import urllib.parse
 from sse_starlette import EventSourceResponse
 
 from app.management.manager import ServerManager
-from app.management.server import GameConsoleLine, GameServer
+from app.management.server import GameServer, GameServerEvent
 
 router = APIRouter(
     prefix="/{type}/{id}",
@@ -50,29 +50,28 @@ def run_command(server: ServerDependency, command: dict):
 MESSAGE_STREAM_DELAY = 1 # in seconds
 MESSAGE_STREAM_RETRY_TIMEOUT = 15000 # in milliseconds
 
-@router.get('/console/stream')
+@router.get('/stream')
 async def console_stream(server: ServerDependency, request: Request):
     async def event_generator():
-        events = []
-        def add_line(line: GameConsoleLine):
-            events.append(line)
-        server.console.add_line_listener(add_line)
-        last_status = server.status
+        events: list[GameServerEvent] = []
+        def add_to_event_queue(event: GameServerEvent):
+            events.append(event)
+        listener = server.add_event_listener(add_to_event_queue)
+
         while True:
             if await request.is_disconnected():
-                # TODO add way to remove listeners besides just directly modifying the list
-                server.console.listeners.remove(add_line)
+                listener.deregister()
                 break
-
-            if last_status != server.status:
-               events.append({"event": "status", "data": json.dumps({"status": server.status.name})})
 
             while events:
                 event = events.pop(0)
                 yield {
                     # TODO does this event need to have an id field?
                     "retry": MESSAGE_STREAM_RETRY_TIMEOUT,
-                    **event
+                    "event": event.type.name.lower(),
+                    # need to dump json manually because the automatic conversion just stringifies the python object which might not be valid
+                    # use just the data portion of the event's dict representation
+                    "data": json.dumps(event.data_dict())
                 }
 
             await asyncio.sleep(MESSAGE_STREAM_DELAY)
