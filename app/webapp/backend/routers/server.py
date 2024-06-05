@@ -6,7 +6,7 @@ import urllib.parse
 from sse_starlette import EventSourceResponse
 
 from app.management.manager import ServerManager
-from app.management.server import GameConsoleLine, GameServer
+from app.management.server import GameServer, GameServerEvent
 
 router = APIRouter(
     prefix="/{type}/{id}",
@@ -50,32 +50,33 @@ def run_command(server: ServerDependency, command: dict):
 MESSAGE_STREAM_DELAY = 1 # in seconds
 MESSAGE_STREAM_RETRY_TIMEOUT = 15000 # in milliseconds
 
-@router.get('/console/stream')
+@router.get('/stream')
 async def console_stream(server: ServerDependency, request: Request):
     async def event_generator():
-        events = []
-        def add_line(line: GameConsoleLine):
-            events.append(line)
-        server.console.add_line_listener(add_line)
-        last_status = server.status
+        events: list[GameServerEvent] = []
+        def add_to_event_queue(event: GameServerEvent):
+            events.append(event)
+        listener = server.add_event_listener(add_to_event_queue)
+
         while True:
             if await request.is_disconnected():
-                # TODO add way to remove listeners besides just directly modifying the list
-                server.console.listeners.remove(add_line)
+                listener.deregister()
                 break
-
-            if last_status != server.status:
-               events.append({"event": "status", "data": json.dumps({"status": server.status.name})})
 
             while events:
                 event = events.pop(0)
                 yield {
                     # TODO does this event need to have an id field?
                     "retry": MESSAGE_STREAM_RETRY_TIMEOUT,
-                    **event
+                    "event": event.type.name.lower(),
+                    # use data_dict to only get data, as the event type is already encoded in the event
+                    # also manually convert to JSON, as that isn't done automatically here for some reason
+                    "data": json.dumps(event.data_dict())
                 }
 
             await asyncio.sleep(MESSAGE_STREAM_DELAY)
-    # the headers are there because otherwise the React dev server proxy applies compression,
-    # causing the front end EventSource to just not work
+    # The default for Cache-Control header just has no-cache,
+    # but we need no-transform to get the React dev server to not apply compression,
+    # because it is hardcoded to be on for some reason,
+    # and the EventSource API just doesn't work if the request has compression.
     return EventSourceResponse(event_generator(), headers={"Cache-Control": "no-cache, no-transform"})
