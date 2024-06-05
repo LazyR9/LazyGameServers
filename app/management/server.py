@@ -278,7 +278,7 @@ class GameServer:
             listener.call(event)
 
     def emit_status_event(self):
-        """Convenience function that emitts an event with the current status of the server"""
+        """Convenience function that emits an event with the current status of the server"""
         self.emit_event(StatusEvent(self.status))
 
     def _read_output(self, error = False):

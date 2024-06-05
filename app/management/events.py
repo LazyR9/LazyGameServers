@@ -1,7 +1,7 @@
 from enum import Enum, auto
 
 class GameServerEventType(Enum):
-    # used so that if a plugin or something wants 
+    # used so that if a plugin or something wants to send an event they don't have to add an extra type
     CUSTOM = 0
     STATUS = auto()
     CONSOLE_LINE = auto()
@@ -20,7 +20,7 @@ class GameServerEvent:
     def as_dict(self):
         """
         Returns a dictionary representing this event.
-        This dict has two entry:
+        This dict has two entries:
         * `event`: contains the event type
         * `data`: contains any extra data the event provides.
 
@@ -36,7 +36,7 @@ class GameServerEvent:
 
         This is here so subclasses don't have to override `as_dict()` and just change the part of the dict that matters.
 
-        :return: A dict representation of an extra data associated with an event
+        :return: A dict representation of any extra data associated with an event
         """
         return self.extra_data
 

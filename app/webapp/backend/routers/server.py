@@ -69,12 +69,14 @@ async def console_stream(server: ServerDependency, request: Request):
                     # TODO does this event need to have an id field?
                     "retry": MESSAGE_STREAM_RETRY_TIMEOUT,
                     "event": event.type.name.lower(),
-                    # need to dump json manually because the automatic conversion just stringifies the python object which might not be valid
-                    # use just the data portion of the event's dict representation
+                    # use data_dict to only get data, as the event type is already encoded in the event
+                    # also manually convert to JSON, as that isn't done automatically here for some reason
                     "data": json.dumps(event.data_dict())
                 }
 
             await asyncio.sleep(MESSAGE_STREAM_DELAY)
-    # the headers are there because otherwise the React dev server proxy applies compression,
-    # causing the front end EventSource to just not work
+    # The default for Cache-Control header just has no-cache,
+    # but we need no-transform to get the React dev server to not apply compression,
+    # because it is hardcoded to be on for some reason,
+    # and the EventSource API just doesn't work if the request has compression.
     return EventSourceResponse(event_generator(), headers={"Cache-Control": "no-cache, no-transform"})
