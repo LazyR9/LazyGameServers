@@ -1,9 +1,12 @@
 import subprocess
+import psutil
 from threading import Thread
 from typing import Callable
 from enum import Enum, auto
+import datetime
 
 from app import utils
+from app.management.events import ConsoleLineEvent, GameServerEvent, GameServerEventListener, GameServerEventType, StatusEvent
 from app.management.storage import StorageManager
 
 # TODO this can support anything that is run through the command line,
@@ -16,29 +19,43 @@ class GameServerStatus(Enum):
     RUNNING = auto()
     STOPPING = auto()
 
+class GameConsoleLine:
+    def __init__(self, line: str, error: bool = False, timestamp: datetime.datetime = None):
+        self.timestamp = timestamp or datetime.datetime.now(datetime.timezone.utc)
+        self.line = line
+        self.error = error
+
+    def as_dict(self):
+        return {
+            "line": self.line,
+            "error": self.error,
+            "timestamp": self.timestamp.isoformat(),
+        }
+
 class GameConsole:
-    def __init__(self):
-        self.lines = []
-        self.listeners: list[Callable[[str]]] = []
+    def __init__(self, server: 'GameServer'):
+        self.lines: list[GameConsoleLine] = []
+        self.server = server
 
-    def add_line_listener(self, listener):
-        """
-        Adds `listener` to a list of functions to be called when a new line of output is added.
-        The only parameter passed is the string that was added.
-        """
-        self.listeners.append(listener)
+    def add_line(self, line, error = False):
+        console_line = GameConsoleLine(line, error)
+        self.lines.append(console_line)
+        self.server.emit_event(ConsoleLineEvent(console_line))
 
-    def add_line(self, line):
-        self.lines.append(line)
-        # Make a copy so changing the original list doesn't break the loop
-        for listener in self.listeners[:]:
-            listener(line)
+    def as_dict(self):
+        return {
+            "lines": [line.as_dict() for line in self.lines],
+        }
+    
+    def clear(self):
+        self.lines.clear()
+        # TODO listener for when console is cleared?
 
     def get_str(self):
         """
         Concatenates all lines of output into one string.
         """
-        return ''.join(self.lines)
+        return ''.join([line.line for line in self.lines])
 
     def print(self):
         print(self.get_str())
@@ -56,7 +73,7 @@ class GameServer:
     # >>> x = MyClass()
     # >>> x.SOME_VALUE = 'something else'
     # >>> MyClass.SOME_VALUE != x.SOME_VALUE
-    # False
+    # True
     #####
     # so would just using a class default as the attribute work?
     # should it be capital?
@@ -102,8 +119,12 @@ class GameServer:
         self.start_indicator = start_indicator if start_indicator is not None else self.DEFAULT_START_INDICATOR
 
         self.process = None
+        self.psutil = None
         self.custom_data = self.CUSTOM_DATA.copy()
         self.status = GameServerStatus.STOPPED
+        self.console = GameConsole(self)
+
+        self._listeners: list[GameServerEventListener] = []
 
         self.ensure_directory()
 
@@ -128,7 +149,7 @@ class GameServer:
         not when the object is created.
 
         For example, this could be adding required downloads from shared storage,
-        or download other files needed to run the server.
+        or downloading other files needed to run the server.
         """
 
     def get_cmd(self):
@@ -148,14 +169,22 @@ class GameServer:
     def start_server(self):
         """
         Spawns the server subprocess and run threads to monitor it.
+        Returns True if the server started, False if it was already running.
         """
+        if self.status != GameServerStatus.STOPPED:
+            return False
         self.status = GameServerStatus.STARTING if self.start_indicator is not None else GameServerStatus.RUNNING
         self.process = subprocess.Popen(self.get_cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.get_directory())
-        self.console = GameConsole()
+        self.ps = psutil.Process(self.process.pid)
+        self.console.clear()
         if self.start_indicator:
-            self.console.add_line_listener(self._find_start_indicator)
-        Thread(target=self._read_output, daemon=True).start()
+            self.add_event_listener(self._find_start_indicator, GameServerEventType.CONSOLE_LINE)
+        # One thread monitors stdout, and the other monitors stderr
+        Thread(target=self._read_output, args=(True, ), daemon=True).start()
+        Thread(target=self._read_output, args=(False,), daemon=True).start()
         Thread(target=self._wait_for_stop, daemon=True).start()
+        self.emit_status_event()
+        return True
 
     def stop_server(self):
         self.status = GameServerStatus.STOPPING
@@ -163,6 +192,7 @@ class GameServer:
             utils.send_ctrl_c(self.process)
         else:
             self.send_console_command(self.stop_command)
+        self.emit_status_event()
 
     def send_console_command(self, command):
         """
@@ -198,6 +228,9 @@ class GameServer:
             "startup_cmd": self.startup_command,
             "stop_cmd": self.stop_command,
             "start_indicator": self.start_indicator,
+            # TODO should the status be under stats?
+            "status": self.status.name,
+            "stats": self.get_stats(),
         }
         for key, item in self.custom_data.items():
             if key in data:
@@ -208,6 +241,14 @@ class GameServer:
             data[key] = item
         return data
     
+    def get_stats(self):
+        return {
+            "cpu": self.ps.cpu_percent() if self.status != GameServerStatus.STOPPED else 0,
+            "memory": 2_500_000,
+            "players": 4,
+            "max_players": 10,
+        }
+    
     def ensure_directory(self):
         try:
             self.storage_manager.create_server_folder(self)
@@ -216,16 +257,41 @@ class GameServer:
             # however, the function being called checks instead of catching exception so...
             pass
 
-    def _read_output(self):
+    def add_event_listener(self, func, filter = None):
+        listener = GameServerEventListener(func, filter)
+        self._listeners.append(listener)
+        return listener
+
+    def emit_event(self, event: GameServerEvent):
+        """
+        Passes the event to `call()` on all listeners,
+        which will then decide if the filter on the listener matches
+        and then call the underlying function.
+
+        :param event: The event to emit.
+        """
+        # remove deregistered listeners from list
+        self._listeners = [listener for listener in self._listeners if listener._registered]
+        for listener in self._listeners:
+            event.listener = listener
+            # the events are filtered in the call method, so this loops over all listeners
+            listener.call(event)
+
+    def emit_status_event(self):
+        """Convenience function that emits an event with the current status of the server"""
+        self.emit_event(StatusEvent(self.status))
+
+    def _read_output(self, error = False):
         """
         Constantly monitors the stdout of the subprocess, and adds it to the server's console object.
         Will block until the program exits, only call on another thread.
         """
+        output = self.process.stderr if error else self.process.stdout
         while self.process.poll() is None:
-            line = self.process.stdout.readline().decode("utf8")
+            line = output.readline().decode("utf8")
             if not line: # an empty line means eof, happens when a program writes eof before actually termainating
                 break
-            self.console.add_line(line)
+            self.console.add_line(line, error)
         # TODO could a program terminate before writing eof and cause some output to not get captured?
         # seems unlikely but if i encounter problems i'll add some code here to capture left over output
             
@@ -239,13 +305,15 @@ class GameServer:
             # TODO better crash handling, probably an auto restart
             print("server crash detected!")
         self.status = GameServerStatus.STOPPED
+        self.emit_status_event()
 
-    def _find_start_indicator(self, line):
+    def _find_start_indicator(self, event: ConsoleLineEvent):
         """
         Looks for the start indicator in `line`.
         Used as console line listener, and doesn't handle special cases like the indicator being `None` or an empty string.
         """
-        if self.start_indicator not in line:
+        if self.start_indicator not in event.line.line:
             return
         self.status = GameServerStatus.RUNNING
-        self.console.listeners.remove(self._find_start_indicator)
+        self.emit_status_event()
+        event.listener.deregister()
