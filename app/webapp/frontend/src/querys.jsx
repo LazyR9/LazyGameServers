@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ResponseError } from "./errors";
 
 export const useFetchQuery = ({queryKey, apiEndpoint, ...otherOptions}) => useQuery({
-    queryKey: queryKey,
+    queryKey,
     queryFn: async () => {
         const response = await fetch(apiEndpoint);
         if (!response.ok) {
@@ -11,4 +11,9 @@ export const useFetchQuery = ({queryKey, apiEndpoint, ...otherOptions}) => useQu
         return await response.json();
     },
     ...otherOptions,
+})
+
+export const useServerQuery = ({type, serverId}) => useFetchQuery({
+    queryKey: ["servers", type, serverId],
+    apiEndpoint: `/api/servers/${encodeURIComponent(type)}/${serverId}`,
 })

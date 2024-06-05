@@ -1,20 +1,20 @@
 import { useParams } from "react-router-dom";
-import { Badge, Button, ButtonGroup, Form, OverlayTrigger, Placeholder, Tab, Tabs, Tooltip } from "react-bootstrap";
+import { Badge, Button, ButtonGroup, OverlayTrigger, Placeholder, Tab, Tabs, Tooltip } from "react-bootstrap";
 import ErrorPage, { ResponseError } from "../errors";
 import ServerConsole from "../components/Console";
-import { useFetchQuery } from "../querys";
+import { useServerQuery } from "../querys";
 import { useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import ServerSettings from "../components/Settings";
 
 export default function Server() {
   const { type, serverId } = useParams();
-  const apiEndpoint = `/api/servers/${encodeURIComponent(type)}/${serverId}`;
-
-  const queryKey = useMemo(() => ["servers", type, serverId], [type, serverId]);
-  const { isPending, isError, data: server, error } = useFetchQuery({ queryKey, apiEndpoint });
-
+  
+  const { isPending, isError, data: server, error } = useServerQuery({ type, serverId });
+  
   const queryClient = useQueryClient();
-
+  const apiEndpoint = `/api/servers/${encodeURIComponent(type)}/${serverId}`;
+  const queryKey = useMemo(() => ["servers", type, serverId], [type, serverId]);
   useEffect(() => {
     const eventSource = new EventSource(apiEndpoint + "/stream");
 
@@ -80,29 +80,9 @@ export default function Server() {
               <ServerConsole type={type} serverId={serverId} />
             </Tab>
             <Tab eventKey="settings" title="Setttings">
-              Pretend there are some settings here
+              <ServerSettings type={type} serverId={serverId} />
             </Tab>
           </Tabs>
-
-          {/* TODO figure out these, they're copied from a tutorial iirc */}
-          <br /><br /><br /><br />
-          <div className="mt-4">
-            <Form action="edit">
-              <Button type="submit">Edit</Button>
-            </Form>
-            <Form
-              method="post"
-              action="destroy"
-              onSubmit={(event) => {
-                // eslint-disable-next-line no-restricted-globals
-                if (!confirm("confirm pls thx")) {
-                  event.preventDefault();
-                }
-              }}
-            >
-              <Button type="submit">Delete</Button>
-            </Form>
-          </div>
         </>
       )}
     </div>
