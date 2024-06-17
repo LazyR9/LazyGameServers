@@ -9,3 +9,7 @@ export function formatBytes(bytes, decimals = 2) {
 
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
 }
+
+export function getServerEndpoint(type, serverId) {
+  return `/api/servers/${encodeURIComponent(type)}/${serverId}`;
+}

@@ -7,8 +7,16 @@
 }
 
 .navbar .nav-link {
-    margin-right: 0.5rem;
+    /* Set the padding-x to always be 0.5rem, as at smaller breakpoints it goes to 0 */
+    --bs-nav-link-padding-x: 0.5rem;
     border-radius: 0.5rem;
+}
+
+/* add padding to the top at smaller breakpoints, which is when the navbar collapses */
+@media (max-width: 575.98px) {
+    .navbar-collapse {
+        padding-top: 0.5rem;
+    }
 }
 
 a.undo-a-tag {

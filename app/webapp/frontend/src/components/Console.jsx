@@ -1,11 +1,15 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Button, Form, InputGroup } from "react-bootstrap";
 import { useFetchQuery } from "../querys";
+import { getServerEndpoint } from "../utils";
+import { useParams } from "react-router-dom";
 
-export default function ServerConsole({ type, serverId }) {
+export default function ServerConsole() {
+  const { type, serverId } = useParams();
+
   const [enteredCmd, setEnteredCmd] = useState("");
 
-  const apiEndpoint = `/api/servers/${encodeURIComponent(type)}/${serverId}/console`
+  const apiEndpoint = getServerEndpoint(type, serverId) + "/console";
 
   const queryKey = useMemo(() => ["servers", type, serverId, "console"], [type, serverId]);
 

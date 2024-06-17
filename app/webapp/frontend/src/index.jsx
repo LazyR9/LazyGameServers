@@ -34,25 +34,25 @@ const router = createBrowserRouter([
           },
           {
             path: "servers/:type/:serverId",
-            element: <Server />
+            element: <Server />,
           },
           {
             path: "dashboard",
-            element: <Dashboard />
+            element: <Dashboard />,
           },
           {
             path: "signin",
-            element: <p>No actual sign in page yet...</p>
+            element: <p>No actual sign in page yet...</p>,
           },
           {
             path: "*",
-            element: <ErrorPage title="Page not Found" subtitle="That page doesn't seem to exist. Let me check the back." />
-          }
-        ]
+            element: <ErrorPage title="Page not Found" subtitle="That page doesn't seem to exist. Let me check the back." />,
+          },
+        ],
       },
     ],
   },
-])
+]);
 
 const query = new QueryClient({
   defaultOptions: {

@@ -1,7 +1,9 @@
 import { Form, InputGroup } from "react-bootstrap";
 import { useServerQuery } from "../querys"
+import { useParams } from "react-router-dom";
 
-export default function ServerSettings({ type, serverId }) {
+export default function ServerSettings() {
+  const { type, serverId } = useParams();
   const { data: server } = useServerQuery({ type, serverId });
 
   return (<>
