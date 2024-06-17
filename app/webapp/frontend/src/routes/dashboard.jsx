@@ -57,7 +57,7 @@ export function ServerListItem({ server }) {
 export function ServerListItemStats({ stats }) {
   return (
     <div className="row align-children-center">
-      <div className="col">Players: <span className='text-nowrap'>{stats.players} / {stats.max_players}</span></div>
+      <div className="col">Players: <span className='text-nowrap'>{stats.players || '-'} / {stats.max_players || '-'}</span></div>
       <div className="col">CPU Usage: {stats.cpu}%</div>
       <div className="col">Memory Usage: {formatBytes(stats.memory)}</div>
     </div>

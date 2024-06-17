@@ -232,6 +232,9 @@ class GameServer:
             "status": self.status.name,
             "stats": self.get_stats(),
         }
+        # TODO should custom data be moved to a subdict?
+        # this could make writing the frontend easier because we know what values should be editable,
+        # and this would also resolve the comment below
         for key, item in self.custom_data.items():
             if key in data:
                 # TODO what to do when keys collide? can't happen through loading a config file
@@ -242,12 +245,17 @@ class GameServer:
         return data
     
     def get_stats(self):
-        return {
-            "cpu": self.ps.cpu_percent() if self.status != GameServerStatus.STOPPED else 0,
-            "memory": 2_500_000,
-            "players": 4,
-            "max_players": 10,
-        }
+        # TODO same as comment above, should extra stats provided by a server be under a specific key?
+        if self.status == GameServerStatus.STOPPED:
+            return {
+                "cpu": 0,
+                "memory": 0,
+            }
+        with self.ps.oneshot():
+            return {
+                "cpu": self.ps.cpu_percent(),
+                "memory": self.ps.memory_info().rss,
+            }
     
     def ensure_directory(self):
         try:
