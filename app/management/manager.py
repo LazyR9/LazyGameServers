@@ -3,14 +3,14 @@ import yaml
 import importlib.util
 from pathlib import Path
 
-from app.management.storage import StorageManager
+from app.management.storage import Directory, StorageManager
 from app.management.server import GameServer
 
 class ServerManager:
     CLASSES = []
 
     @staticmethod
-    def load_classes(directory: str):
+    def load_classes(directory: Directory):
         """
         Loads all the classes it can find in dir
 
@@ -18,11 +18,10 @@ class ServerManager:
         :return: The found classes
         """
         classes: list[type[GameServer]] = []
-        for filename in os.listdir(directory):
-            file_path = os.path.join(directory, filename)
-            if not os.path.isfile(file_path):
+        for file in directory.list_files():
+            if issubclass(type(file), Directory):
                 continue
-            spec = importlib.util.spec_from_file_location(Path(directory).stem, file_path)
+            spec = importlib.util.spec_from_file_location(Path(directory.path).stem, file.path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             for name in dir(module):
@@ -41,7 +40,7 @@ class ServerManager:
     @classmethod
     def load_builtin_games(cls):
         # TODO this works but idk if this is the best way to do this or what a better way would be...
-        cls.CLASSES = cls.load_classes(os.path.join(os.path.dirname(__file__), "builtin_games"))
+        cls.CLASSES = cls.load_classes(Directory(os.path.dirname(__file__)).get_directory("builtin_games"))
 
     @classmethod
     def get_class(cls, class_name):
@@ -56,8 +55,8 @@ class ServerManager:
             storage_manager = StorageManager(self.dir)
         self.storage_manager = storage_manager
 
-        self.servers_yaml = os.path.join(self.storage_manager.servers_dir, "servers.yml")
-        self.settings_yaml = os.path.join(self.dir, "settings.yml")
+        self.servers_yaml = self.storage_manager.servers_dir.get_file("servers.yml")
+        self.settings_yaml = self.storage_manager.base_dir.get_file("settings.yml")
 
         self.servers: list[GameServer] = []
 
@@ -113,7 +112,7 @@ class ServerManager:
         return None # technically None could be returned implicitly but i added this for readablity
 
     def load_settings(self):
-        with open(self.settings_yaml) as file:
+        with self.settings_yaml.open() as file:
             try:
                 settings = yaml.safe_load(file)
             except yaml.YAMLError as error:
@@ -123,11 +122,11 @@ class ServerManager:
             self.register_class(game, self.get_class(class_), True)
 
     def save_settings(self):
-        with open(self.settings_yaml, "w") as file:
+        with self.settings_yaml.open("w") as file:
             yaml.safe_dump({"class_map": {k: v.__name__ for k, v in self.class_map.items()}}, file)
 
     def load_servers(self):
-        with open(self.servers_yaml) as file:
+        with self.servers_yaml.open() as file:
             try:
                 servers = yaml.safe_load(file)
             except yaml.YAMLError as error:
@@ -136,6 +135,6 @@ class ServerManager:
             self.create_server_obj(**server)
 
     def save_servers(self):
-        with open(self.servers_yaml, "w") as file:
+        with self.servers_yaml.open("w") as file:
             yaml.safe_dump([s.as_dict() for s in self.servers], file, sort_keys=False)
         

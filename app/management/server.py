@@ -174,7 +174,7 @@ class GameServer:
         if self.status != GameServerStatus.STOPPED:
             return False
         self.status = GameServerStatus.STARTING if self.start_indicator is not None else GameServerStatus.RUNNING
-        self.process = subprocess.Popen(self.get_cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.get_directory())
+        self.process = subprocess.Popen(self.get_cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.get_directory().path)
         self.ps = psutil.Process(self.process.pid)
         self.console.clear()
         if self.start_indicator:
