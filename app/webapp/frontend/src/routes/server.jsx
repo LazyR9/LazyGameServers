@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Badge, Button, ButtonGroup, OverlayTrigger, Placeholder, Tab, Tabs, Tooltip } from "react-bootstrap";
 import ErrorPage, { ResponseError } from "../errors";
 import ServerConsole from "../components/Console";
@@ -8,7 +8,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import ServerSettings from "../components/Settings";
 
 export default function Server() {
-  const { type, serverId } = useParams();
+  const { type, serverId, tab } = useParams();
+  const navigate = useNavigate();
   
   const { isPending, isError, data: server, error } = useServerQuery({ type, serverId });
   
@@ -75,11 +76,16 @@ export default function Server() {
           <Tabs
             id="server-tabs"
             className="mt-2"
+            mountOnEnter
+            // TODO having the tabs controlled by routers like this causes extra renders
+            // should probably fix that at some point but it isn't a problem right now so i'll ignore it
+            activeKey={tab}
+            onSelect={(nextTab) => navigate(`${tab !== undefined ? '../' : ''}${nextTab}`, { relative: "path", replace: true })}
           >
             <Tab eventKey="console" title="Console">
               <ServerConsole type={type} serverId={serverId} />
             </Tab>
-            <Tab eventKey="settings" title="Setttings">
+            <Tab eventKey="settings" title="Settings">
               <ServerSettings type={type} serverId={serverId} />
             </Tab>
           </Tabs>

@@ -33,7 +33,7 @@ const router = createBrowserRouter([
             element: <div>nothing here...</div>,
           },
           {
-            path: "servers/:type/:serverId",
+            path: "servers/:type/:serverId/:tab?/*",
             element: <Server />,
           },
           {
@@ -52,7 +52,11 @@ const router = createBrowserRouter([
       },
     ],
   },
-]);
+], {
+  future: {
+    v7_relativeSplatPath: true,
+  },
+});
 
 const query = new QueryClient({
   defaultOptions: {
