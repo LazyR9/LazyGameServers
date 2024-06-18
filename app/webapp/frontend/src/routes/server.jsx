@@ -6,13 +6,16 @@ import { useServerQuery } from "../querys";
 import { useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import ServerSettings from "../components/Settings";
+import ServerFileBrowser from "../components/FileBrowser";
+
+// TODO organize imports in all files
 
 export default function Server() {
   const { type, serverId, tab } = useParams();
   const navigate = useNavigate();
-  
+
   const { isPending, isError, data: server, error } = useServerQuery({ type, serverId });
-  
+
   const queryClient = useQueryClient();
   const apiEndpoint = `/api/servers/${encodeURIComponent(type)}/${serverId}`;
   const queryKey = useMemo(() => ["servers", type, serverId], [type, serverId]);
@@ -84,6 +87,9 @@ export default function Server() {
           >
             <Tab eventKey="console" title="Console">
               <ServerConsole type={type} serverId={serverId} />
+            </Tab>
+            <Tab eventKey="files" title="Files">
+              <ServerFileBrowser type={type} serverId={serverId} />
             </Tab>
             <Tab eventKey="settings" title="Settings">
               <ServerSettings type={type} serverId={serverId} />

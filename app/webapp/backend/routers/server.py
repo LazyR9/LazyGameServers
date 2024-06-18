@@ -7,6 +7,7 @@ from sse_starlette import EventSourceResponse
 
 from app.management.manager import ServerManager
 from app.management.server import GameServer, GameServerEvent
+from app.management.storage import File, FileType
 
 router = APIRouter(
     prefix="/{type}/{id}",
@@ -20,6 +21,14 @@ def server_dependency(type: str, id: str, request: Request, response: Response):
     return server
 
 ServerDependency = Annotated[GameServer, Depends(server_dependency)]
+
+def server_file_dependency(server: ServerDependency, path: str, request: Request):
+    file = server.get_directory().get_file_or_dir(path)
+    if file is None:
+        raise HTTPException(404)
+    return file
+
+ServerFileDependency = Annotated[File, Depends(server_file_dependency)]
 
 @router.get("")
 def get_server(server: ServerDependency):
@@ -80,3 +89,34 @@ async def console_stream(server: ServerDependency, request: Request):
     # because it is hardcoded to be on for some reason,
     # and the EventSource API just doesn't work if the request has compression.
     return EventSourceResponse(event_generator(), headers={"Cache-Control": "no-cache, no-transform"})
+
+@router.get('/files')
+def get_files(server: ServerDependency):
+    return get_file(server, '')
+
+@router.get('/files/{path:path}')
+def get_file(file: ServerFileDependency, path):
+    # TODO binary files just throw an error here, need to figure out a way to tell that a file is binary
+    # TODO add a raw parameter that just sends the file over HTTP instead of wrapping in JSON,
+    # which will also be the only way to get contents of binary or large files.
+    # TODO add a size limit so that getting the raw file is the only way to get contents.
+    # This means that files over that limit cannot be opened in the frontend editor.
+    file_dict = file.as_dict(True)
+    # append the path used to get to the file, as it is relative to the root
+    # and also means the real location on disk doesn't get potentionally leaked.
+    # TODO don't just copy the path used to get,
+    # because including multiple slashes in the url will still work and then they will be included here.
+    file_dict['path'] = "/" + path
+    if path in ('', '.'):
+        file_dict['name'] = '/'
+    return file_dict
+
+@router.put('/files/{path:path}')
+def put_file(file: ServerFileDependency, new_file: dict, response: Response):
+    if file.type != FileType.FILE:
+        raise HTTPException(405)
+    if not file.exists():
+        response.status_code = 201
+    with file.open("w") as writable_file:
+        writable_file.write(new_file['contents'])
+    return temp

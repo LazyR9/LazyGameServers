@@ -83,3 +83,9 @@ a.undo-a-tag {
         opacity: 0;
     }
 }
+
+.file-input {
+    resize: none;
+    font-family: var(--bs-font-monospace);
+    white-space: pre;
+}
