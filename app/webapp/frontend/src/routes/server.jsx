@@ -86,13 +86,13 @@ export default function Server() {
             onSelect={(nextTab) => navigate(`${tab !== undefined ? '../' : ''}${nextTab}`, { relative: "path", replace: true })}
           >
             <Tab eventKey="console" title="Console">
-              <ServerConsole type={type} serverId={serverId} />
+              <ServerConsole />
             </Tab>
             <Tab eventKey="files" title="Files">
-              <ServerFileBrowser type={type} serverId={serverId} />
+              <ServerFileBrowser />
             </Tab>
             <Tab eventKey="settings" title="Settings">
-              <ServerSettings type={type} serverId={serverId} />
+              <ServerSettings />
             </Tab>
           </Tabs>
         </>
