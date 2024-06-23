@@ -55,10 +55,18 @@ function FileIcon({ type }) {
 
 function FileItem({ file }) {
   // FIXME This is a workaround because react router's v7_relativeSplatPath flag doesn't work properly.
-  // Currently, this leaves trailing slashes which mess with the cache system, so this should be changed as soon as it gets fixed!
   // (issue link: https://github.com/remix-run/react-router/issues/11629)
   const { pathname } = useLocation();
-  const link = pathname.endsWith('/') ? pathname + file.name : pathname + '/' + file.name;
+  let link = pathname + '/' + file.name;
+  // react router just lets the ".." through to the a tag without changing it,
+  // so we manually resolve this to make sure there isn't a trailing slash,
+  // as that messes with react query's caching
+  if (link.endsWith('..')) {
+    const split_path = link.split('/');
+    split_path.pop(); // pop off the ".."
+    split_path.pop(); // then whatever is behind it
+    link = split_path.join('/');
+  }
   return (
     <ListGroup.Item as={Link} to={link} relative="path">
       <FileIcon type={file.type} />
