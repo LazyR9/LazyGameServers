@@ -21,6 +21,8 @@ export function ServerList() {
   const { isPending, isError, data: servers, error } = useFetchQuery({
     queryKey: ['servers'],
     apiEndpoint: '/api/servers',
+    // TODO make the refetch interval user configurable
+    refetchInterval: 10000,
   });
 
   if (isPending) {
