@@ -1,12 +1,13 @@
-import Card from 'react-bootstrap/Card';
-import CardText from 'react-bootstrap/CardText';
-import Badge from 'react-bootstrap/Badge';
+import { Badge, Card, CardText } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { BsFillPlayFill, BsFillStopFill } from 'react-icons/bs';
+import { IconContext } from 'react-icons/lib';
 
 import { formatBytes } from '../utils';
 
 import './dashboard.css';
 import { useFetchQuery } from '../querys';
+import { ServerControls, ServerIndicator } from './server';
 
 export default function Dashboard() {
   return (
@@ -45,12 +46,28 @@ export function ServerList() {
 export function ServerListItem({ server }) {
   return (
     <Link className='undo-a-tag' to={`/servers/${encodeURIComponent(server.game)}/${server.id}`}>
-      <div className='row hover seperate-cells rounded text-center py-2'>
-        <div className="col-sm-2"><p className='h5 d-inline-block mb-0'>{server.id}</p> <Badge bg='secondary'>{server.game}</Badge></div>
+      <div className='row hover seperate-cells rounded text-center py-2 align-children-center'>
+        <div className="col-sm-2"><span className='h5'>{server.id}</span> <Badge bg='secondary'>{server.game}</Badge></div>
+        <div className="col-sm-auto">
+          <div className="row gx-0 align-children-center-flex justify-content-center" onClick={(e) => {
+            e.preventDefault();
+          }}>
+            <div className="col-auto me-3">
+              <ServerIndicator server={server} />
+            </div>
+            <div className="col-auto">
+              <IconContext.Provider value={{ size: 20 }}>
+                <ServerControls server={server} size="sm">
+                  <BsFillPlayFill />
+                  <BsFillStopFill />
+                </ServerControls>
+              </IconContext.Provider>
+            </div>
+          </div>
+        </div>
         <div className="col-sm">
           <ServerListItemStats stats={server.stats} />
         </div>
-        <div className="col-sm-2">this is a description</div>
       </div>
     </Link>
   )

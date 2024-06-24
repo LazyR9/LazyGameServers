@@ -6,6 +6,11 @@
     align-content: center;
 }
 
+.align-children-center-flex > * {
+    display: flex;
+    align-items: center;
+}
+
 /* above the sm breakpoint */
 @media (min-width: 576px) {
     .row.seperate-cells > *:not(:first-child) {
