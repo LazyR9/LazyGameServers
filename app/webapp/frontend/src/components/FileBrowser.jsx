@@ -7,16 +7,32 @@ import { getServerEndpoint } from "../utils";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { ResponseError } from "../errors";
+import ErrorPage, { ResponseError } from "../errors";
 
 export default function ServerFileBrowser() {
   const { type, serverId, "*": path } = useParams();
 
   const queryKey = ["servers", type, serverId, "files", path];
   const apiEndpoint = getServerEndpoint(type, serverId) + '/files/' + path;
-  const { isPending, data: file } = useFetchQuery({ queryKey, apiEndpoint });
+  const { isPending, isError, error, data: file } = useFetchQuery({ queryKey, apiEndpoint });
 
-  if (isPending) return <div style={{textAlign: "center"}}><Spinner /></div>
+  if (isPending) return <div style={{ textAlign: "center" }}><Spinner /></div>
+
+  if (isError) {
+    if (error instanceof ResponseError) {
+      if (error.response.status === 404)
+        return (
+          <ErrorPage title="Unknown file!" subtitle={<>The file <code>/{path}</code> doesn't exist on the server!</>}>
+            {/* TODO implement this */}
+            <Button onClick={() => alert("not implemented yet!")}>Create File</Button>
+            {/* This relies on the buggy behaviour of splat paths and relative links (see useWorkaround),
+                and will need to be updated once that is fixed. */}
+            <Button as={Link} to="." className="ms-2">Root Folder</Button>
+          </ErrorPage>
+        )
+    }
+    return <ErrorPage error={error} />
+  }
 
   switch (file.type) {
     case "DIRECTORY":
