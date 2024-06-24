@@ -1,0 +1,25 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "npm",
+            "script": "start",
+            "path": "app/webapp/frontend",
+            "problemMatcher": [],
+            "label": "Start Frontend",
+            "detail": "Runs \"npm start\" in \"app/webapp/frontend\""
+        },
+        {
+            "label": "Start Backend",
+            "command": "python",
+            "type": "shell",
+            "args": ["main.py", "--debug", "--directory", "test"]
+        },
+        {
+            "label": "Start Dev Server",
+            "dependsOn": ["Start Frontend", "Start Backend"]
+        }
+    ]
+}
