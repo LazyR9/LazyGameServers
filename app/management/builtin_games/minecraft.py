@@ -2,10 +2,10 @@ from app.management.server import GameServer
 
 class MinecraftServer(GameServer):
 
-    DEFAULT_STARTUP_CMD = "java -Xmx{MAX_RAM}M -jar {SERVER_JAR} nogui"
-    DEFAULT_STOP_CMD = "stop"
-    DEFAULT_START_INDICATOR = "For help, type"
-    CUSTOM_DATA = {
+    startup_command = "java -Xmx{MAX_RAM}M -jar {SERVER_JAR} nogui"
+    stop_command = "stop"
+    start_indicator = "For help, type"
+    custom_data = {
         "server_jar": "server.jar",
         "max_ram": "2048",
     }

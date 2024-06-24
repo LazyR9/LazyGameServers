@@ -62,33 +62,19 @@ class GameConsole:
 
 # TODO more consistent usage of command vs cmd
 class GameServer:
-
-    # these are defaults for the class, the lowercase versions are instance specific
-    # TODO python copies these class attributes to each instance,
-    # so that each instance's value can differ from the class.
-    # For example,
-    #####
-    # >>> class MyClass:
-    # >>>   SOME_VALUE = 'default'
-    # >>> x = MyClass()
-    # >>> x.SOME_VALUE = 'something else'
-    # >>> MyClass.SOME_VALUE != x.SOME_VALUE
-    # True
-    #####
-    # so would just using a class default as the attribute work?
-    # should it be capital?
+    # class defaults, can be overridden on subclasses and also differ on the actual objects
 
     # command line command to start server
-    DEFAULT_STARTUP_CMD = None
+    startup_command = None
     # command to send to console to shutdown server, "^C" means to send a SIGTERM
-    DEFAULT_STOP_CMD = "^C"
+    stop_command = "^C"
     # text to look for in the console to know when the server is finished loading
     # if the start_indicator is None, this server doesn't have a way to know when it is done starting.
     # this can also be an empty string to indicate that the status will be set manually, like through a plugin or mod.
-    DEFAULT_START_INDICATOR = None
+    start_indicator = None
 
     # default values for extra data can be specified here
-    CUSTOM_DATA: dict[str, str] = {}
+    custom_data: dict[str, str] = {}
     REPLACEMENTS: list[str] = []
 
     # name of folders that hold other files and folders to be shared across server instances
@@ -114,13 +100,12 @@ class GameServer:
         self.game = game
         self.storage_manager = storage_manager
 
-        self.startup_command = startup_command if startup_command is not None else self.DEFAULT_STARTUP_CMD
-        self.stop_command = stop_command if stop_command is not None else self.DEFAULT_STOP_CMD
-        self.start_indicator = start_indicator if start_indicator is not None else self.DEFAULT_START_INDICATOR
+        self.startup_command = startup_command if startup_command is not None else self.startup_command
+        self.stop_command    = stop_command    if stop_command    is not None else self.stop_command
+        self.start_indicator = start_indicator if start_indicator is not None else self.start_indicator
 
         self.process = None
         self.psutil = None
-        self.custom_data = self.CUSTOM_DATA.copy()
         self.status = GameServerStatus.STOPPED
         self.console = GameConsole(self)
 
@@ -164,7 +149,7 @@ class GameServer:
         # create a copy of custom data, as long as the key is in the whitelist.
         # it also allows values that don't appear in the default custom data list,
         # in case extra custom data is specified that needs to be replaced.
-        return {k: v for k, v in self.custom_data.items() if k in self.__class__.REPLACEMENTS or k not in self.__class__.CUSTOM_DATA}
+        return {k: v for k, v in self.custom_data.items() if k in self.__class__.REPLACEMENTS or k not in self.__class__.custom_data}
 
     def start_server(self):
         """
