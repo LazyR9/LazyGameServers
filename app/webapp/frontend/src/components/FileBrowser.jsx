@@ -53,11 +53,11 @@ function FileIcon({ type }) {
   };
 }
 
-function FileItem({ file }) {
+function useWorkaround(relativePath) {
   // FIXME This is a workaround because react router's v7_relativeSplatPath flag doesn't work properly.
   // (issue link: https://github.com/remix-run/react-router/issues/11629)
   const { pathname } = useLocation();
-  let link = pathname + '/' + file.name;
+  let link = pathname + '/' + relativePath;
   // react router just lets the ".." through to the a tag without changing it,
   // so we manually resolve this to make sure there isn't a trailing slash,
   // as that messes with react query's caching
@@ -67,6 +67,11 @@ function FileItem({ file }) {
     split_path.pop(); // then whatever is behind it
     link = split_path.join('/');
   }
+  return link;
+}
+
+function FileItem({ file }) {
+  const link = useWorkaround(file.name);
   return (
     <ListGroup.Item as={Link} to={link} relative="path">
       <FileIcon type={file.type} />
@@ -93,9 +98,7 @@ function File({ file, apiEndpoint }) {
     }
   })
 
-  // FIXME same as above
-  const { pathname } = useLocation();
-  const link = pathname.endsWith('/') ? pathname + ".." : pathname + "/..";
+  const link = useWorkaround("..");
 
   return (
     <div>
