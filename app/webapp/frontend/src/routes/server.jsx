@@ -7,8 +7,37 @@ import { useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import ServerSettings from "../components/Settings";
 import ServerFileBrowser from "../components/FileBrowser";
+import { getServerEndpoint } from "../utils";
 
 // TODO organize imports in all files
+
+export function ServerIndicator({ server, className }) {
+  return (
+    <OverlayTrigger placement="right" overlay={<Tooltip>{server.status.slice(0, 1) + server.status.slice(1).toLowerCase()}</Tooltip>}>
+      <span className={"indicator " + server.status.toLowerCase() + (className ? (" " + className) : '')} />
+    </OverlayTrigger>
+  );
+}
+
+export function ServerControls({ server, children, ...props }) {
+  const apiEndpoint = getServerEndpoint(server.game, server.id);
+  let start = "Start";
+  let stop = "Stop";
+  if (children) {
+    if (children instanceof Array && children.length === 2) {
+      start = children[0];
+      stop = children[1];
+    } else {
+      console.warn("ServerControls got incorrect children!\nPlease provide two seperate elements to be wrapped in the start than stop button.");
+    }
+  }
+  return (
+    <ButtonGroup>
+      <Button disabled={server.status !== "STOPPED"} onClick={() => fetch(apiEndpoint + "/start")} {...props}>{start}</Button>
+      <Button disabled={server.status !== "RUNNING"} onClick={() => fetch(apiEndpoint + "/stop")} {...props}>{stop}</Button>
+    </ButtonGroup>
+  );
+}
 
 export default function Server() {
   const { type, serverId, tab } = useParams();
@@ -17,7 +46,7 @@ export default function Server() {
   const { isPending, isError, data: server, error } = useServerQuery({ type, serverId });
 
   const queryClient = useQueryClient();
-  const apiEndpoint = `/api/servers/${encodeURIComponent(type)}/${serverId}`;
+  const apiEndpoint = getServerEndpoint(type, serverId);
   const queryKey = useMemo(() => ["servers", type, serverId], [type, serverId]);
   useEffect(() => {
     const eventSource = new EventSource(apiEndpoint + "/stream");
@@ -50,6 +79,7 @@ export default function Server() {
 
   return (
     <div id="server">
+      {/* TODO make the pending page resemble the actual page */}
       {isPending ? (
         <>
           <Placeholder as='h1' animation="glow">
@@ -66,15 +96,10 @@ export default function Server() {
             <Badge bg="secondary">
               <span className="h4">{server.game}</span>
             </Badge>
-            <OverlayTrigger placement="right" overlay={<Tooltip>{server.status.slice(0, 1) + server.status.slice(1).toLowerCase()}</Tooltip>}>
-              <span className={"indicator " + server.status.toLowerCase()} />
-            </OverlayTrigger>
+            <ServerIndicator className="ms-2" server={server} />
           </div>
 
-          <ButtonGroup>
-            <Button disabled={server.status !== "STOPPED"} onClick={() => fetch(apiEndpoint + "/start")}>Start</Button>
-            <Button disabled={server.status !== "RUNNING"} onClick={() => fetch(apiEndpoint + "/stop")}>Stop</Button>
-          </ButtonGroup>
+          <ServerControls server={server} />
 
           <Tabs
             id="server-tabs"

@@ -57,7 +57,6 @@ a.undo-a-tag {
     height: 1rem;
     border-radius: 50%;
     display: inline-block;
-    margin-left: 0.5rem;
 }
 
 .indicator.stopped {
