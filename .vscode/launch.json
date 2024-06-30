@@ -4,9 +4,35 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Launch Chrome against localhost",
+            "name": "Launch Chrome",
             "url": "http://localhost:3000",
-            "webRoot": "${workspaceFolder}"
-        }
-    ]
+            "webRoot": "${workspaceFolder}",
+        },
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Backend",
+            "program": "main.py",
+            "args": ["--debug", "--directory", "test"],
+        },
+        {
+            "name": "Frontend",
+            "request": "launch",
+            "runtimeArgs": [
+                "start",
+            ],
+            "runtimeExecutable": "npm",
+            "skipFiles": [
+                "<node_internals>/**",
+            ],
+            "type": "node",
+            "cwd": "${workspaceFolder}/app/webapp/frontend",
+        },
+    ],
+    "compounds": [
+        {
+            "name": "Server/Client",
+            "configurations": ["Backend", "Frontend", "Launch Chrome"],
+        },
+    ],
 }
