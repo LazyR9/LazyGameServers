@@ -48,6 +48,7 @@ def stop_server(server: ServerDependency):
 
 @router.get("/console")
 def get_server_console(server: ServerDependency):
+    # TODO send only part of the console and have more load as the user scrolls up
     return server.console.as_dict()
 
 @router.post("/console")

@@ -13,14 +13,14 @@ import { getServerEndpoint } from "../utils";
 
 export function ServerIndicator({ server, className }) {
   return (
-    <OverlayTrigger placement="right" overlay={<Tooltip>{server.status.slice(0, 1) + server.status.slice(1).toLowerCase()}</Tooltip>}>
-      <span className={"indicator " + server.status.toLowerCase() + (className ? (" " + className) : '')} />
+    <OverlayTrigger placement="right" overlay={<Tooltip>{server.status.value.slice(0, 1) + server.status.value.slice(1).toLowerCase()}</Tooltip>}>
+      <span className={"indicator " + server.status.value.toLowerCase() + (className ? (" " + className) : '')} />
     </OverlayTrigger>
   );
 }
 
 export function ServerControls({ server, children, ...props }) {
-  const apiEndpoint = getServerEndpoint(server.game, server.id);
+  const apiEndpoint = getServerEndpoint(server.game.value, server.id.value);
   let start = "Start";
   let stop = "Stop";
   if (children) {
@@ -33,8 +33,8 @@ export function ServerControls({ server, children, ...props }) {
   }
   return (
     <ButtonGroup>
-      <Button disabled={server.status !== "STOPPED"} onClick={() => fetch(apiEndpoint + "/start")} {...props}>{start}</Button>
-      <Button disabled={server.status !== "RUNNING"} onClick={() => fetch(apiEndpoint + "/stop")} {...props}>{stop}</Button>
+      <Button disabled={server.status.value !== "STOPPED"} onClick={() => fetch(apiEndpoint + "/start")} {...props}>{start}</Button>
+      <Button disabled={server.status.value !== "RUNNING"} onClick={() => fetch(apiEndpoint + "/stop")} {...props}>{stop}</Button>
     </ButtonGroup>
   );
 }
@@ -64,7 +64,10 @@ export default function Server() {
     eventSource.addEventListener("status", (event) => {
       queryClient.setQueryData(queryKey, (data) => ({
         ...data,
-        status: JSON.parse(event.data).status,
+        status: {
+          ...data.status,
+          value: JSON.parse(event.data).status,
+        }
       }))
     })
     return () => eventSource.close();
@@ -92,9 +95,9 @@ export default function Server() {
       ) : (
         <>
           <div className="pb-2 position-relative">
-            <span className="h1 pe-2">{server.id}</span>
+            <span className="h1 pe-2">{server.id.value}</span>
             <Badge bg="secondary">
-              <span className="h4">{server.game}</span>
+              <span className="h4">{server.game.value}</span>
             </Badge>
             <ServerIndicator className="ms-2" server={server} />
           </div>

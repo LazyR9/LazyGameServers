@@ -1,12 +1,13 @@
 import subprocess
 import psutil
 from threading import Thread
-from typing import Callable
+from typing import Annotated
 from enum import Enum, auto
 import datetime
 
 from app import utils
 from app.management.events import ConsoleLineEvent, GameServerEvent, GameServerEventListener, GameServerEventType, StatusEvent
+from app.management.metadata import MetadataFlags, Setting, ValueMetadata
 from app.management.storage import StorageManager
 
 # TODO this can support anything that is run through the command line,
@@ -62,25 +63,25 @@ class GameConsole:
 
 # TODO more consistent usage of command vs cmd
 class GameServer:
+    id: Setting[str]
+    game: Setting[str]
+    status: Annotated[GameServerStatus, ValueMetadata(MetadataFlags.NONE, lambda status: status.name)]
+
     # class defaults, can be overridden on subclasses and also differ on the actual objects
 
     # command line command to start server
-    startup_command = None
+    startup_command: Setting[str] = None
     # command to send to console to shutdown server, "^C" means to send a SIGTERM
-    stop_command = "^C"
+    stop_command: Setting[str] = "^C"
     # text to look for in the console to know when the server is finished loading
     # if the start_indicator is None, this server doesn't have a way to know when it is done starting.
     # this can also be an empty string to indicate that the status will be set manually, like through a plugin or mod.
-    start_indicator = None
-
-    # default values for extra data can be specified here
-    custom_data: dict[str, str] = {}
-    REPLACEMENTS: list[str] = []
+    start_indicator: Setting[str] = None
 
     # name of folders that hold other files and folders to be shared across server instances
     BINS = []
 
-    def __init__(self, id, game, storage_manager: StorageManager, startup_command: str = None, stop_command: str = None, start_indicator: str = None, **kwargs):
+    def __init__(self, id: str, game: str, storage_manager: StorageManager, startup_command: str = None, stop_command: str = None, start_indicator: str = None, **kwargs):
         """
         Creates a new server object.
         
@@ -113,18 +114,28 @@ class GameServer:
 
         self.ensure_directory()
 
-        # remember all custom data so it can be accessed later
-        self.custom_data.update(kwargs)
+        for key, value in kwargs.items():
+            # only set attributes which already exist
+            # TODO remove some of the above attributes because they would be covered by this loop here
+            # TODO disallow some attributes to be set, like methods or builtin python attributes
+            if hasattr(self, key):
+                setattr(self, key, value)
+            else:
+                del kwargs[key]
         self.init(**kwargs)
 
-    def init(self, **kwargs):
+    def init(self, **extra_data):
         """
         Do any extra setup on this object. This is called at the end of `__init__()`.
+        This is called everytime the server is loaded from disk.
+
+        For a function that is called only once when a server is created, use `setup()`.
         
-        This function serves as an easier way to initalize custom fields,
-        as it takes no args and doesn't need to call super() because the base class does nothing.
-        `kwargs` is everything in `custom_data`.
-        This is useful for having named parameters instead of refering to a value using a string.
+        This function should be used instead of overriding `__init__()`
+        because it may get called again without recreating the object,
+        for example if the server is reloaded from disk.
+
+        `kwargs` is any extra data that was found in the config that didn't match any fields defined in the class.
         """
 
     def setup(self):
@@ -149,7 +160,7 @@ class GameServer:
         # create a copy of custom data, as long as the key is in the whitelist.
         # it also allows values that don't appear in the default custom data list,
         # in case extra custom data is specified that needs to be replaced.
-        return {k: v for k, v in self.custom_data.items() if k in self.__class__.REPLACEMENTS or k not in self.__class__.custom_data}
+        return {k: v for k, v, *_ in ValueMetadata.iter_metadatas(self, filter=lambda meta: meta.flags & MetadataFlags.REPLACEMENT)}
 
     def start_server(self):
         """
@@ -207,30 +218,25 @@ class GameServer:
         self.storage_manager.remove_shared_file_from_server(self, file)
 
     def as_dict(self):
-        data = {
-            "id": self.id,
-            "game": self.game,
-            "startup_cmd": self.startup_command,
-            "stop_cmd": self.stop_command,
-            "start_indicator": self.start_indicator,
-            # TODO should the status be under stats?
-            "status": self.status.name,
-            "stats": self.get_stats(),
-        }
-        # TODO should custom data be moved to a subdict?
-        # this could make writing the frontend easier because we know what values should be editable,
-        # and this would also resolve the comment below
-        for key, item in self.custom_data.items():
-            if key in data:
-                # TODO what to do when keys collide? can't happen through loading a config file
-                # but could happen if a key is set through a script
-                print("custom data trying to override builtin data!")
-                continue
-            data[key] = item
+        # TODO should the status be under stats?
+        data = {"server_data": ValueMetadata(MetadataFlags.SETTINGS).as_dict({})}
+        
+        # TODO this is kinda a scuffed way to do this
+        for name, value, metadata, cls in ValueMetadata.iter_metadatas(self):
+            if cls is GameServer:
+                d = data
+            else:
+                d = data["server_data"]["value"]
+                if cls.__name__ not in d:
+                    d[cls.__name__] = ValueMetadata(MetadataFlags.SETTINGS).as_dict({})
+                d = d[cls.__name__]["value"]
+
+            d[metadata.name or name] = metadata.as_dict(value, transform=False)
+        
         return data
     
-    def get_stats(self):
-        # TODO same as comment above, should extra stats provided by a server be under a specific key?
+    def get_stats(self) -> Annotated[dict, ValueMetadata(MetadataFlags.NONE)]:
+        # TODO should extra stats provided by a server be under a specific key?
         if self.status == GameServerStatus.STOPPED:
             return {
                 "cpu": 0,

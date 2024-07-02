@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
 from app.management.manager import ServerManager
+from app.webapp.backend.models import Server
 from .server import router as serverRouter
 
 router = APIRouter(
@@ -9,16 +10,6 @@ router = APIRouter(
     tags=["servers"],
 )
 router.include_router(serverRouter)
-
-# TODO move these to their own file (models.py or schemas.py or something)
-class ServerStats(BaseModel, extra='allow'):
-    cpu: float
-    memory: int
-
-class Server(BaseModel, extra='allow'):
-    game: str
-    id: str
-    stats: ServerStats
 
 @router.get("")
 def get_servers(request: Request) -> list[Server]:

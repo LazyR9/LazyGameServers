@@ -38,16 +38,16 @@ export function ServerList() {
   // currently they use a unique game and id combo
   return (
     <div className='mx-3'>
-      {servers.map((server) => <ServerListItem server={server} key={server.game + ':' + server.id} />)}
+      {servers.map((server) => <ServerListItem server={server} key={server.game.value + ':' + server.id.value} />)}
     </div>
   );
 }
 
 export function ServerListItem({ server }) {
   return (
-    <Link className='undo-a-tag' to={`/servers/${encodeURIComponent(server.game)}/${server.id}`}>
+    <Link className='undo-a-tag' to={`/servers/${encodeURIComponent(server.game.value)}/${server.id.value}`}>
       <div className='row hover seperate-cells rounded text-center py-2 align-children-center'>
-        <div className="col-sm-2"><span className='h5'>{server.id}</span> <Badge bg='secondary'>{server.game}</Badge></div>
+        <div className="col-sm-2"><span className='h5'>{server.id.value}</span> <Badge bg='secondary'>{server.game.value}</Badge></div>
         <div className="col-sm-auto">
           <div className="row gx-0 align-children-center-flex justify-content-center" onClick={(e) => {
             e.preventDefault();
@@ -66,7 +66,7 @@ export function ServerListItem({ server }) {
           </div>
         </div>
         <div className="col-sm">
-          <ServerListItemStats stats={server.stats} />
+          <ServerListItemStats stats={server.stats.value} />
         </div>
       </div>
     </Link>

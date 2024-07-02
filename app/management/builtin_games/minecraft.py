@@ -1,21 +1,17 @@
+from typing import Annotated
+from app.management.metadata import MetadataFlags, Setting, ValueMetadata
 from app.management.server import GameServer
 
 class MinecraftServer(GameServer):
 
     startup_command = "java -Xmx{MAX_RAM}M -jar {SERVER_JAR} nogui"
-    stop_command = "stop"
+    stop_command    = "stop"
     start_indicator = "For help, type"
-    custom_data = {
-        "server_jar": "server.jar",
-        "max_ram": "2048",
-    }
-    REPLACEMENTS = ["server_jar", "max_ram"]
+
+    server_jar: Annotated[str, ValueMetadata(MetadataFlags.SETTINGS | MetadataFlags.WRITABLE | MetadataFlags.REPLACEMENT)] = "server.jar"
+    max_ram: Annotated[int, ValueMetadata(MetadataFlags.SETTINGS | MetadataFlags.WRITABLE | MetadataFlags.REPLACEMENT)] = 2048
 
     BINS = ["servarjars"]
-
-    def init(self, server_jar, max_ram, **kwargs):
-        self.server_jar = server_jar
-        self.max_ram = max_ram
         
     def setup(self):
         self.add_shared_file(self.server_jar, "serverjars")
