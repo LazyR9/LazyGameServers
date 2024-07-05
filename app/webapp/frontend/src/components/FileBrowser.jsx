@@ -2,11 +2,10 @@ import { Button, Form, ListGroup, Spinner } from "react-bootstrap";
 import { BsArrowLeft, BsCheck2, BsFileEarmarkFill, BsFillFolderFill, BsFillQuestionSquareFill, BsXLg } from "react-icons/bs";
 import { IconContext } from "react-icons/lib";
 
-import { useFetchQuery } from "../querys"
+import { useFetchMutation, useFetchQuery } from "../querys"
 import { getServerEndpoint } from "../utils";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import ErrorPage, { ResponseError } from "../errors";
 
 export default function ServerFileBrowser() {
@@ -98,21 +97,7 @@ function FileItem({ file }) {
 
 function File({ file, apiEndpoint }) {
   const [contents, setContents] = useState(file.contents);
-  const mutation = useMutation({
-    mutationFn: async (contents) => {
-      const response = await fetch(apiEndpoint, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ contents }),
-      });
-      if (!response.ok) {
-        throw new ResponseError(response);
-      }
-      return await response.json();
-    }
-  })
+  const mutation = useFetchMutation({ apiEndpoint });
 
   const link = useWorkaround("..");
 
@@ -122,7 +107,7 @@ function File({ file, apiEndpoint }) {
       <Form
         onSubmit={(e) => {
           e.preventDefault();
-          mutation.mutate(contents);
+          mutation.mutate({ contents });
         }}
       >
         <Form.Group>
