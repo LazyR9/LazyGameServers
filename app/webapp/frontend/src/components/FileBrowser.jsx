@@ -1,8 +1,8 @@
 import { Button, Form, ListGroup, Spinner } from "react-bootstrap";
-import { BsArrowLeft, BsCheck2, BsFileEarmarkFill, BsFillFolderFill, BsFillQuestionSquareFill, BsXLg } from "react-icons/bs";
+import { BsArrowLeft, BsFileEarmarkFill, BsFillFolderFill, BsFillQuestionSquareFill } from "react-icons/bs";
 import { IconContext } from "react-icons/lib";
 
-import { useFetchMutation, useFetchQuery } from "../querys"
+import { MutationButton, useFetchMutation, useFetchQuery } from "../querys"
 import { getServerEndpoint } from "../utils";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useState } from "react";
@@ -111,19 +111,7 @@ function File({ file, apiEndpoint }) {
         }}
       >
         <Form.Group>
-          <Button type="submit" className="mb-2 me-2" disabled={mutation.isPending}>
-            {mutation.isPending ? <Spinner size="sm" /> : "Save"}
-          </Button>
-          {mutation.isSuccess && (
-            <IconContext.Provider value={{ color: "green", size: 25 }}>
-              <BsCheck2 />
-            </IconContext.Provider>
-          )}
-          {mutation.isError && (
-            <IconContext.Provider value={{ color: "red", size: 25 }}>
-              <BsXLg />
-            </IconContext.Provider>
-          )}
+          <MutationButton mutation={mutation} type="submit" className="mb-2" />
           <Form.Control
             className="file-input"
             as="textarea"
