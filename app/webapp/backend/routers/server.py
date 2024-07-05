@@ -34,6 +34,15 @@ ServerFileDependency = Annotated[File, Depends(server_file_dependency)]
 def get_server(server: ServerDependency):
     return server.as_dict()
 
+@router.put("")
+def update_server(server: ServerDependency, body: dict):
+    failed_keys = server.update_from_dict(body)
+    # TODO change response based if there were any failures or not,
+    # i want to add better error reporting on this first tho
+    return {
+        "failed_keys": failed_keys
+    }
+
 # TODO these functions use this as a placeholder until i decide what the API should respond with
 temp = {"result": "success"}
 @router.get("/start")

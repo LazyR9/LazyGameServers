@@ -157,9 +157,6 @@ class GameServer:
         return utils.get_cmd(self.startup_command, self.get_replacements())
     
     def get_replacements(self):
-        # create a copy of custom data, as long as the key is in the whitelist.
-        # it also allows values that don't appear in the default custom data list,
-        # in case extra custom data is specified that needs to be replaced.
         return {k: v for k, v, *_ in ValueMetadata.iter_metadatas(self, filter=lambda meta: meta.flags & MetadataFlags.REPLACEMENT)}
 
     def start_server(self):
@@ -234,6 +231,22 @@ class GameServer:
             d[metadata.name or name] = metadata.as_dict(value, transform=False)
         
         return data
+    
+    def update_from_dict(self, data: dict):
+        failed_keys = []
+
+        for key, value in data.items():
+            if key not in self.__annotations__:
+                continue
+            if not ValueMetadata.is_metadata(self.__annotations__[key]):
+                continue
+            metadata: ValueMetadata = self.__annotations__[key].__metadata__[0]
+            if not metadata.flags & MetadataFlags.WRITABLE:
+                failed_keys.append(key)
+                continue
+            setattr(self, key, value)
+        
+        return failed_keys
     
     def get_stats(self) -> Annotated[dict, ValueMetadata(MetadataFlags.NONE)]:
         # TODO should extra stats provided by a server be under a specific key?
