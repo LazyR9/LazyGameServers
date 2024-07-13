@@ -112,6 +112,15 @@ class ServerManager:
         return None # technically None could be returned implicitly but i added this for readablity
 
     def load_settings(self):
+        if self.settings_yaml.exists():
+            self.reload_settings()
+        else:
+            for cls in self.CLASSES:
+                if cls.default_type is not None:
+                    self.register_class(cls.default_type, cls, False)
+
+    def reload_settings(self):
+        self.class_map.clear()
         with self.settings_yaml.open() as file:
             try:
                 settings = yaml.safe_load(file)
@@ -127,9 +136,16 @@ class ServerManager:
             yaml.safe_dump({"class_map": {k: v.__name__ for k, v in self.class_map.items()}}, file)
 
     def load_servers(self):
+        if self.servers_yaml.exists():
+            self.reload_servers()
+        else:
+            pass # no extra setup is required if there is no file
+
+    def reload_servers(self):
+        self.servers.clear()
         with self.servers_yaml.open() as file:
             try:
-                servers = yaml.safe_load(file)
+                servers = yaml.safe_load(file) or []
             except yaml.YAMLError as error:
                 print("Error reading servers.yml:", error)
         for server in servers:

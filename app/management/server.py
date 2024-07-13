@@ -63,6 +63,8 @@ class GameConsole:
 
 # TODO more consistent usage of command vs cmd
 class GameServer:
+    default_type: str = None
+
     id: Setting[str]
     game: Setting[str]
     status: Annotated[GameServerStatus, ValueMetadata(MetadataFlags.NONE, lambda status: status.name)]
