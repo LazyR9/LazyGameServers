@@ -26,4 +26,4 @@ def correct_file_seperator(path: str):
    :param path: The path to correct file seperators
    :return: A new corrected string
    """
-   return os.path.join(*path.split("/"))
+   return os.path.normpath(path)
