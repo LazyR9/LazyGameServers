@@ -40,6 +40,9 @@ class File:
             self._parent = Directory(os.path.dirname(self.path))
         return self._parent
     
+    def ensure_parent_exists(self):
+        self.get_parent().ensure_exists()
+    
     def as_dict(self, include_contents = False):
         value = {"name": self.name, "type": self.type.name}
         if include_contents:
@@ -78,6 +81,9 @@ class Directory(File):
             return File(path, self)
         else:
             return Directory(path, self)
+        
+    def ensure_exists(self):
+        os.makedirs(self.path, exist_ok=True)
         
     def as_dict(self, recursion_depth = 0):
         """

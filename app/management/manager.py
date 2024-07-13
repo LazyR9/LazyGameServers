@@ -122,6 +122,7 @@ class ServerManager:
             self.register_class(game, self.get_class(class_), True)
 
     def save_settings(self):
+        self.settings_yaml.ensure_parent_exists()
         with self.settings_yaml.open("w") as file:
             yaml.safe_dump({"class_map": {k: v.__name__ for k, v in self.class_map.items()}}, file)
 
@@ -135,6 +136,7 @@ class ServerManager:
             self.create_server_obj(**server)
 
     def save_servers(self):
+        self.servers_yaml.ensure_parent_exists()
         with self.servers_yaml.open("w") as file:
             yaml.safe_dump([s.as_dict() for s in self.servers], file, sort_keys=False)
         
