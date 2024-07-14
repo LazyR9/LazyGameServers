@@ -1,4 +1,4 @@
-import { Badge, Card, CardText } from 'react-bootstrap';
+import { Badge, Button, Card, CardText, Form, Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { BsFillPlayFill, BsFillStopFill } from 'react-icons/bs';
 import { IconContext } from 'react-icons/lib';
@@ -6,8 +6,9 @@ import { IconContext } from 'react-icons/lib';
 import { formatBytes } from '../utils';
 
 import './dashboard.css';
-import { useFetchQuery } from '../querys';
+import { useFetchMutation, useFetchQuery } from '../querys';
 import { ServerControls, ServerIndicator } from './server';
+import { useState } from 'react';
 
 export default function Dashboard() {
   return (
@@ -37,10 +38,53 @@ export function ServerList() {
   // TODO should servers use a unique id?
   // currently they use a unique game and id combo
   return (
-    <div className='mx-3'>
-      {servers.map((server) => <ServerListItem server={server} key={server.game.value + ':' + server.id.value} />)}
-    </div>
+    <>
+      <div className='mx-3'>
+        <div className='mb-2'>
+          {servers.map((server) => <ServerListItem server={server} key={server.game.value + ':' + server.id.value} />)}
+        </div>
+        <NewServerButton />
+      </div>
+    </>
   );
+}
+
+export function NewServerButton() {
+  const [show, setShow] = useState(false);
+
+  const mutation = useFetchMutation({ apiEndpoint: "/api/servers", method: "POST" });
+
+  return (
+    <>
+      <Button onClick={() => setShow(true)}>New</Button>
+      <Modal show={show} onHide={() => setShow(false)} centered>
+        <Modal.Header>
+          <Modal.Title>New Server</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form id='new-server-form' onSubmit={(e) => {
+            e.preventDefault();
+            console.log(e.target[0].value)
+            console.log(e.target[1].value)
+            mutation.mutate({ id: e.target[0].value, type: e.target[1].value });
+          }}>
+            <Form.Group>
+              <Form.Label>ID</Form.Label>
+              <Form.Control />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Type</Form.Label>
+              <Form.Control />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant='secondary' onClick={() => setShow(false)}>Cancel</Button>
+          <Button type='submit' form='new-server-form' onClick={() => setShow(false)}>Create</Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  )
 }
 
 export function ServerListItem({ server }) {
