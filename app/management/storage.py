@@ -148,6 +148,8 @@ class StorageManager:
         :raises FileExistsError: If a file exists in the destination
         """
         src_file = self.get_shared_file(game, bin, file)
+        if src_file is None:
+            raise FileNotFoundError(f"Source file {src_file} doesn't exist!")
         if dest_name is None:
             dest_name = os.path.basename(src_file)
         dest_file = os.path.join(self.get_server_folder(server), dest_name)
