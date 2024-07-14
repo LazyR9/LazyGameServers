@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Request
-from pydantic import BaseModel
+from typing import Annotated
+from fastapi import APIRouter, Depends, Request
 
 from app.management.manager import ServerManager
 from app.webapp.backend.models import Server
@@ -11,8 +11,12 @@ router = APIRouter(
 )
 router.include_router(serverRouter)
 
+def manager_dependency(request: Request):
+    return request.app.state.server_manager
+
+ManagerDependency = Annotated[ServerManager, Depends(manager_dependency)]
+
 @router.get("")
-def get_servers(request: Request) -> list[Server]:
-    manager: ServerManager = request.app.state.server_manager
+def get_servers(manager: ManagerDependency) -> list[Server]:
     return [server.as_dict() for server in manager.servers]
 
