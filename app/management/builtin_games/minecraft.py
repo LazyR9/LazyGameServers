@@ -6,7 +6,7 @@ class MinecraftServer(GameServer):
 
     default_type = 'minecraft'
 
-    startup_command = "java -Xmx{MAX_RAM}M -jar {SERVER_JAR} nogui"
+    startup_command = "java -Xmx{max_ram}M -jar {server_jar} nogui"
     stop_command    = "stop"
     start_indicator = "For help, type"
 
