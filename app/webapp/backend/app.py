@@ -1,4 +1,7 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
+from app.management.manager import ServerManager
 
 from .routers import servers
 
@@ -16,6 +19,15 @@ def injection(scope: Scope) -> str:
     return route_path
 _utils.get_route_path.__code__ = injection.__code__
 
-app = FastAPI(root_path="/api")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    manager: ServerManager = app.state.server_manager
+    manager.load_settings()
+    manager.load_servers()
+    yield
+    manager.save_settings()
+    manager.save_servers()
+
+app = FastAPI(root_path="/api", lifespan=lifespan)
 
 app.include_router(servers.router)
