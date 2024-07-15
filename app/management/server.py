@@ -116,6 +116,7 @@ class GameServer:
 
         self.ensure_directory()
 
+        extra_data = {}
         for key, value in kwargs.items():
             # only set attributes which already exist
             # TODO remove some of the above attributes because they would be covered by this loop here
@@ -123,8 +124,8 @@ class GameServer:
             if hasattr(self, key):
                 setattr(self, key, value)
             else:
-                del kwargs[key]
-        self.init(**kwargs)
+                extra_data[key] = value
+        self.init(**extra_data)
 
     def init(self, **extra_data):
         """
