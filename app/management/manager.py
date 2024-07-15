@@ -5,7 +5,7 @@ from pathlib import Path
 
 from app.management.metadata import MetadataFlags
 from app.management.storage import Directory, StorageManager
-from app.management.server import GameServer
+from app.management.server import GameServer, GameServerStatus
 
 class ServerManager:
     CLASSES = []
@@ -105,6 +105,16 @@ class ServerManager:
         server = found_class(id, game, self.storage_manager, **kwargs)
         self.servers.append(server)
         return server
+
+    def wait_for_shutdown(self):
+        # iterate once to send shutdown signals, than iterate again to actually wait.
+        # this way we don't end up waiting for a server to shutdown before starting the shutdown on the next one
+        for server in self.servers:
+            if server.status not in (GameServerStatus.STOPPED, GameServerStatus.STOPPING):
+                server.stop_server()
+        for server in self.servers:
+            if server.process is not None:
+                server.process.wait()
     
     def get_server(self, game, id):
         for server in self.servers:
