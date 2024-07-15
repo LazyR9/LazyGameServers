@@ -83,6 +83,16 @@ function SettingsSection({ id, name, data }) {
                 onChange={e => data[key].value = e.target.value} />
             </Form.Group>
           );
+        else if (value.type === 'bool')
+          return (
+            <Form.Check
+              key={key}
+              className="mb-3"
+              label={value.name || <code>{key}</code>}
+              type="switch"
+              defaultChecked={value.value}
+              onChange={e => data[key].value = e.target.checked} />
+          );
         else if (value.type === 'object')
           return (
             <SettingsSection key={key} data={value.value} />

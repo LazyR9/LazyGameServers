@@ -17,6 +17,7 @@ class ValueMetadata:
         int: "int",
         float: "float",
         dict: "object",
+        bool: "bool",
     }
 
     def __init__(self, flags: MetadataFlags, transform: Callable = None, section = None, name = None, friendly_name = None, type: str = None):
