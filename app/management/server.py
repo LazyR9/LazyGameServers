@@ -82,6 +82,8 @@ class GameServer:
 
     # whether or not this server should start as soon as soon as it is loaded
     auto_start: Setting[bool] = False
+    # whether or not the server should attempt to automatically restart if it detects a crash
+    restart_on_crash: Setting[bool] = True
     # amount of time in seconds that a process has to stop,
     # after this we will forcably kill it
     stop_timeout: Setting[float] = 30
@@ -335,11 +337,14 @@ class GameServer:
         Also will handle crashes if the server is not set to `STOPPING` when it exits.
         """
         self.process.wait()
-        if self.status != GameServerStatus.STOPPING:
-            # TODO better crash handling, probably an auto restart
-            print("server crash detected!")
+        crash = self.status != GameServerStatus.STOPPING
         self.status = GameServerStatus.STOPPED
         self.emit_status_event()
+        if crash:
+            print(f"Server {self.game}/{self.id} crashed!")
+            if self.restart_on_crash:
+                print("Auto restarting...")
+                self.start_server()
 
     def _find_start_indicator(self, event: ConsoleLineEvent):
         """
