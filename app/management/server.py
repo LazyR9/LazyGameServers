@@ -253,16 +253,13 @@ class GameServer:
     def update_from_dict(self, data: dict):
         failed_keys = []
 
-        for key, value in data.items():
-            if key not in self.__annotations__:
+        for name, value, metadata, cls in ValueMetadata.iter_metadatas(self):
+            if name not in data:
                 continue
-            if not ValueMetadata.is_metadata(self.__annotations__[key]):
-                continue
-            metadata: ValueMetadata = self.__annotations__[key].__metadata__[0]
             if not metadata.flags & MetadataFlags.WRITABLE:
-                failed_keys.append(key)
+                failed_keys.append(name)
                 continue
-            setattr(self, key, value)
+            setattr(self, name, data[name])
         
         return failed_keys
     
