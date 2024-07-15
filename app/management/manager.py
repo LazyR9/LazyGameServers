@@ -3,6 +3,7 @@ import yaml
 import importlib.util
 from pathlib import Path
 
+from app.management.metadata import MetadataFlags
 from app.management.storage import Directory, StorageManager
 from app.management.server import GameServer
 
@@ -68,7 +69,7 @@ class ServerManager:
             raise KeyError(f"Game {game} is already registered!")
         self.class_map[game] = class_
 
-    def create_server(self, game, id, startup_cmd = None, stop_cmd = None, start_indicator = None, **kwargs):
+    def create_server(self, game, id, **kwargs):
         """
         Creates a new server and does first time initalization.
 
@@ -80,11 +81,11 @@ class ServerManager:
         """
         if self.get_server(game, id) is not None:
             raise KeyError(f"Server {id} of type {game} already exists!")
-        server = self.create_server_obj(game, id, startup_cmd, stop_cmd, start_indicator, **kwargs)
+        server = self.create_server_obj(game, id, **kwargs)
         server.setup()
         return server
 
-    def create_server_obj(self, game: str, id, startup_cmd = None, stop_cmd = None, start_indicator = None, **kwargs):
+    def create_server_obj(self, game: str, id, **kwargs):
         """
         Creates the object for the server by looking up the appropriate class for the type
 
@@ -101,7 +102,7 @@ class ServerManager:
                 break
         else:
             found_class = GameServer
-        server = found_class(id, game, self.storage_manager, startup_cmd, stop_cmd, start_indicator, **kwargs)
+        server = found_class(id, game, self.storage_manager, **kwargs)
         self.servers.append(server)
         return server
     
@@ -154,5 +155,5 @@ class ServerManager:
     def save_servers(self):
         self.servers_yaml.ensure_parent_exists()
         with self.servers_yaml.open("w") as file:
-            yaml.safe_dump([s.as_dict() for s in self.servers], file, sort_keys=False)
+            yaml.safe_dump([s.as_dict(flat=True, filter=MetadataFlags.SETTINGS) for s in self.servers], file, sort_keys=False)
         

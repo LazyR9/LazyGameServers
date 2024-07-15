@@ -18,9 +18,9 @@ ManagerDependency = Annotated[ServerManager, Depends(manager_dependency)]
 
 @router.get("")
 def get_servers(manager: ManagerDependency) -> list[Server]:
-    return [server.as_dict() for server in manager.servers]
+    return [server.as_dict(True) for server in manager.servers]
 
 @router.post("")
 def create_server(body: dict, manager: ManagerDependency):
     server = manager.create_server(body["type"], body["id"])
-    return server.as_dict()
+    return server.as_dict(True)

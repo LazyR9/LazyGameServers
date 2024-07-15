@@ -32,7 +32,7 @@ ServerFileDependency = Annotated[File, Depends(server_file_dependency)]
 
 @router.get("")
 def get_server(server: ServerDependency):
-    return server.as_dict()
+    return server.as_dict(True)
 
 @router.put("")
 def update_server(server: ServerDependency, body: dict):

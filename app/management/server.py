@@ -217,22 +217,37 @@ class GameServer:
     def remove_shared_file(self, file):
         self.storage_manager.remove_shared_file_from_server(self, file)
 
-    def as_dict(self):
+    # TODO this function is kinda a mess, clean up somehow?
+    def as_dict(self, include_metadata = False, flat = False, filter: MetadataFlags = None):
+        def empty_dict():
+            return ValueMetadata(MetadataFlags.SETTINGS).as_dict({}) if include_metadata else {}
+        
+        def get(dict):
+            return dict["value"] if include_metadata else dict
+
+
         # TODO should the status be under stats?
-        data = {"server_data": ValueMetadata(MetadataFlags.SETTINGS).as_dict({})}
+        data = {"server_data": empty_dict()} if not flat else {}
         
         # TODO this is kinda a scuffed way to do this
         for name, value, metadata, cls in ValueMetadata.iter_metadatas(self):
-            if cls is GameServer:
+            if filter is not None and not filter & metadata.flags:
+                continue
+
+            if flat or cls is GameServer:
                 d = data
             else:
-                d = data["server_data"]["value"]
+                d = get(data["server_data"])
                 if cls.__name__ not in d:
-                    d[cls.__name__] = ValueMetadata(MetadataFlags.SETTINGS).as_dict({})
-                d = d[cls.__name__]["value"]
+                    d[cls.__name__] = empty_dict()
+                d = get(d[cls.__name__])
 
-            d[metadata.name or name] = metadata.as_dict(value, transform=False)
+            d[metadata.name or name] = metadata.as_dict(value, transform=False) if include_metadata else value
         
+        if not flat:
+            # Remove and reinsert server_data so it's at the end of the dict
+            server_data = data.pop("server_data")
+            data["server_data"] = server_data
         return data
     
     def update_from_dict(self, data: dict):
