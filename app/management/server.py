@@ -73,12 +73,16 @@ class GameServer:
 
     # command line command to start server
     startup_command: Setting[str] = None
-    # command to send to console to shutdown server, "^C" means to send a SIGTERM
+    # command to send to console to stop server, "^C" means to send a SIGTERM
     stop_command: Setting[str] = "^C"
     # text to look for in the console to know when the server is finished loading
     # if the start_indicator is None, this server doesn't have a way to know when it is done starting.
     # this can also be an empty string to indicate that the status will be set manually, like through a plugin or mod.
     start_indicator: Setting[str] = None
+
+    # amount of time in seconds that a process has to stop,
+    # after this we will forcably kill it
+    stop_timeout: Setting[float] = 30
 
     # name of folders that hold other files and folders to be shared across server instances
     BINS = []
@@ -188,6 +192,7 @@ class GameServer:
             utils.send_ctrl_c(self.process)
         else:
             self.send_console_command(self.stop_command)
+        Thread(target=self._kill_after_timeout, daemon=True).start()
         self.emit_status_event()
 
     def send_console_command(self, command):
@@ -344,3 +349,9 @@ class GameServer:
         self.status = GameServerStatus.RUNNING
         self.emit_status_event()
         event.listener.deregister()
+
+    def _kill_after_timeout(self):
+        try:
+            self.process.wait(self.stop_timeout)
+        except subprocess.TimeoutExpired:
+            self.process.kill()
