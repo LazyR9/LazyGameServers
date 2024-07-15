@@ -106,6 +106,11 @@ class ServerManager:
         self.servers.append(server)
         return server
 
+    def auto_start_servers(self):
+        for server in self.servers:
+            if server.auto_start:
+                server.start_server()
+
     def wait_for_shutdown(self):
         # iterate once to send shutdown signals, than iterate again to actually wait.
         # this way we don't end up waiting for a server to shutdown before starting the shutdown on the next one

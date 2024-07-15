@@ -80,6 +80,8 @@ class GameServer:
     # this can also be an empty string to indicate that the status will be set manually, like through a plugin or mod.
     start_indicator: Setting[str] = None
 
+    # whether or not this server should start as soon as soon as it is loaded
+    auto_start: Setting[bool] = False
     # amount of time in seconds that a process has to stop,
     # after this we will forcably kill it
     stop_timeout: Setting[float] = 30

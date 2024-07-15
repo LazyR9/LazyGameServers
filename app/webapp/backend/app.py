@@ -24,6 +24,7 @@ async def lifespan(app: FastAPI):
     manager: ServerManager = app.state.server_manager
     manager.load_settings()
     manager.load_servers()
+    manager.auto_start_servers()
     yield
     manager.wait_for_shutdown()
     manager.save_settings()
