@@ -4,6 +4,8 @@ import { useFetchQuery } from "../querys";
 import { getServerEndpoint } from "../utils";
 import { useParams } from "react-router-dom";
 
+import "./Console.css";
+
 export default function ServerConsole() {
   const { type, serverId } = useParams();
 

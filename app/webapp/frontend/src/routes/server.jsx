@@ -9,6 +9,8 @@ import ServerSettings from "../components/Settings";
 import ServerFileBrowser from "../components/FileBrowser";
 import { getServerEndpoint } from "../utils";
 
+import "./server.css";
+
 // TODO organize imports in all files
 
 export function ServerIndicator({ server, className }) {

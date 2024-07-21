@@ -8,6 +8,8 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { useState } from "react";
 import ErrorPage, { ResponseError } from "../errors";
 
+import "./FileBrowser.css";
+
 export default function ServerFileBrowser() {
   const { type, serverId, "*": path } = useParams();
 

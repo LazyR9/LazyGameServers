@@ -1,0 +1,22 @@
+.console {
+    background-color: #0c0c0c;
+    padding: 0.5rem;
+    width: 100%;
+    height: calc(20lh + 1rem); /* Add the padding on */
+    display: block;
+    font-family: var(--bs-font-monospace);
+    overflow: auto;
+    white-space: pre;
+}
+
+.console-wrapper input {
+    border-top-left-radius: 0;
+}
+
+.console-wrapper button {
+    border-top-right-radius: 0;
+}
+
+.console-line-error {
+    color: #ee0000
+}
