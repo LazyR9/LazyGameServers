@@ -68,8 +68,16 @@ export default function Server() {
           ...data.status,
           value: JSON.parse(event.data).status,
         }
-      }))
-    })
+      }));
+    });
+
+    eventSource.addEventListener("console_clear", (event) => {
+      queryClient.setQueryData([...queryKey, "console"], (data) => ({
+        ...data,
+        lines: [],
+      }));
+    });
+
     return () => eventSource.close();
   }, [apiEndpoint, queryKey, queryClient]);
 

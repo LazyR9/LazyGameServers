@@ -5,6 +5,7 @@ class GameServerEventType(Enum):
     CUSTOM = 0
     STATUS = auto()
     CONSOLE_LINE = auto()
+    CONSOLE_CLEAR = auto()
 
 class GameServerEvent:
     type = GameServerEventType.CUSTOM
@@ -49,6 +50,9 @@ class ConsoleLineEvent(GameServerEvent):
 
     def data_dict(self):
         return self.line.as_dict()
+    
+class ConsoleClearEvent(GameServerEvent):
+    type = GameServerEventType.CONSOLE_CLEAR
     
 class StatusEvent(GameServerEvent):
     type = GameServerEventType.STATUS

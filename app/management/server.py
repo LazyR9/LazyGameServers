@@ -6,7 +6,7 @@ from enum import Enum, auto
 import datetime
 
 from app import utils
-from app.management.events import ConsoleLineEvent, GameServerEvent, GameServerEventListener, GameServerEventType, StatusEvent
+from app.management.events import ConsoleClearEvent, ConsoleLineEvent, GameServerEvent, GameServerEventListener, GameServerEventType, StatusEvent
 from app.management.metadata import MetadataFlags, Setting, ValueMetadata
 from app.management.storage import StorageManager
 
@@ -50,7 +50,7 @@ class GameConsole:
     
     def clear(self):
         self.lines.clear()
-        # TODO listener for when console is cleared?
+        self.server.emit_event(ConsoleClearEvent())
 
     def get_str(self):
         """
