@@ -4,44 +4,59 @@ import importlib.util
 from pathlib import Path
 
 from app.management.metadata import MetadataFlags
-from app.management.storage import Directory, StorageManager
+from app.management.storage import Directory, File, StorageManager
 from app.management.server import GameServer, GameServerStatus
 
 class ServerManager:
     CLASSES = []
 
     @staticmethod
-    def load_classes(directory: Directory):
+    def import_classes_from_directory(directory: Directory, recursion_depth = 0):
         """
-        Loads all the classes it can find in dir
+        Imports all classes that subclass `GameServer` from all files in directory
 
-        :param dir: The direction to search
-        :return: The found classes
+        :param directory: The directory to search
+        :param recursion_depth: The depth of directories to search. -1 for infinite recursion depth
+        :return: The imported classes
         """
         classes: list[type[GameServer]] = []
         for file in directory.list_files():
-            if issubclass(type(file), Directory):
+            if isinstance(file, Directory):
+                if recursion_depth != 0:
+                    classes += ServerManager.import_classes_from_directory(file, recursion_depth - 1)
                 continue
-            spec = importlib.util.spec_from_file_location(Path(directory.path).stem, file.path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            for name in dir(module):
-                if name.startswith("__"):
-                    continue
-                obj = getattr(module, name)
-                if obj == GameServer:
-                    continue
-                if type(obj) != type:
-                    continue
-                if not issubclass(obj, GameServer):
-                    continue
-                classes.append(obj)
+            classes += ServerManager.import_classes_from_file(file)
+        return classes
+    
+    @staticmethod
+    def import_classes_from_file(file: File):
+        """
+        Trys to import `file`, then searchs for classes that extend `GameServer`
+
+        :param file: The file to search
+        :return: All classes that extend `GameServer`
+        """
+        classes: list[type[GameServer]] = []
+        spec = importlib.util.spec_from_file_location(Path(file.path).stem, file.path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        for name in dir(module):
+            if name.startswith("__"):
+                continue
+            obj = getattr(module, name)
+            if obj is GameServer:
+                continue
+            if type(obj) != type:
+                continue
+            if not issubclass(obj, GameServer):
+                continue
+            classes.append(obj)
         return classes
     
     @classmethod
     def load_builtin_games(cls):
         # TODO this works but idk if this is the best way to do this or what a better way would be...
-        cls.CLASSES = cls.load_classes(Directory(os.path.dirname(__file__)).get_directory("builtin_games"))
+        cls.CLASSES = cls.import_classes_from_directory(Directory(os.path.dirname(__file__)).get_directory("builtin_games"))
 
     @classmethod
     def get_class(cls, class_name):
