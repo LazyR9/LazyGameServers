@@ -61,7 +61,6 @@ class GameConsole:
     def print(self):
         print(self.get_str())
 
-# TODO more consistent usage of command vs cmd
 class GameServer:
     default_type: str = None
 
@@ -159,13 +158,13 @@ class GameServer:
         or downloading other files needed to run the server.
         """
 
-    def get_cmd(self):
+    def get_command(self):
         """
         Gets the command for this server.
 
         Anything in curly braces will get replaced by the corresponding value in `replacements`.
         """
-        return utils.get_cmd(self.startup_command, self.get_replacements())
+        return utils.get_command(self.startup_command, self.get_replacements())
     
     def get_replacements(self):
         return {k: v for k, v, *_ in ValueMetadata.iter_metadatas(self, filter=lambda meta: meta.flags & MetadataFlags.REPLACEMENT)}
@@ -178,7 +177,7 @@ class GameServer:
         if self.status != GameServerStatus.STOPPED:
             return False
         self.status = GameServerStatus.STARTING if self.start_indicator is not None else GameServerStatus.RUNNING
-        self.process = subprocess.Popen(self.get_cmd(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.get_directory().path)
+        self.process = subprocess.Popen(self.get_command(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.get_directory().path)
         self.ps = psutil.Process(self.process.pid)
         self.console.clear()
         if self.start_indicator:

@@ -6,8 +6,8 @@ import os
 
 is_windows = sys.platform == "win32"
 
-def get_cmd(cmd: str, replacements):
-   return shlex.split(cmd.format_map(replacements))
+def get_command(command: str, replacements):
+   return shlex.split(command.format_map(replacements))
 
 def send_ctrl_c(process: subprocess.Popen):
    """
