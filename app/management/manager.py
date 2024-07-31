@@ -95,11 +95,11 @@ class ServerManager:
         """
         if self.get_server(game, id) is not None:
             raise KeyError(f"Server {id} of type {game} already exists!")
-        server = self.create_server_obj(game, id, **kwargs)
+        server = self.create_server_obj(game, **kwargs, id=id)
         server.setup()
         return server
 
-    def create_server_obj(self, game: str, id, **kwargs):
+    def create_server_obj(self, game: str, **kwargs):
         """
         Creates the object for the server by looking up the appropriate class for the type
 
@@ -116,7 +116,7 @@ class ServerManager:
                 break
         else:
             found_class = GameServer
-        server = found_class(id, game, self.storage_manager, **kwargs)
+        server = found_class(self.storage_manager, **kwargs, game=game)
         self.servers.append(server)
         return server
 

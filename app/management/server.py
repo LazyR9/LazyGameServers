@@ -66,8 +66,8 @@ class GameConsole:
 class GameServer:
     default_type: str = None
 
-    id: Setting[str]
-    game: Setting[str]
+    id: Setting[str] = None
+    game: Setting[str] = None
     status: Annotated[GameServerStatus, ValueMetadata(MetadataFlags.NONE, lambda status: status.name)]
 
     # class defaults, can be overridden on subclasses and also differ on the actual objects
@@ -92,7 +92,7 @@ class GameServer:
     # name of folders that hold other files and folders to be shared across server instances
     BINS = []
 
-    def __init__(self, id: str, game: str, storage_manager: StorageManager, startup_command: str = None, stop_command: str = None, start_indicator: str = None, **kwargs):
+    def __init__(self, storage_manager: StorageManager, **kwargs):
         """
         Creates a new server object.
         
@@ -108,13 +108,7 @@ class GameServer:
         :param stop_command: The input to send to the stdin of the process, defaults to the class attribute of the same name
         :param start_indicator: What text to look for in the output that signals that the server is fully started, defaults to the class attribute of the same name
         """
-        self.id = id
-        self.game = game
         self.storage_manager = storage_manager
-
-        self.startup_command = startup_command if startup_command is not None else self.startup_command
-        self.stop_command    = stop_command    if stop_command    is not None else self.stop_command
-        self.start_indicator = start_indicator if start_indicator is not None else self.start_indicator
 
         self.process = None
         self.psutil = None
@@ -123,17 +117,17 @@ class GameServer:
 
         self._listeners: list[GameServerEventListener] = []
 
-        self.ensure_directory()
-
         extra_data = {}
         for key, value in kwargs.items():
             # only set attributes which already exist
-            # TODO remove some of the above attributes because they would be covered by this loop here
             # TODO disallow some attributes to be set, like methods or builtin python attributes
             if hasattr(self, key):
                 setattr(self, key, value)
             else:
                 extra_data[key] = value
+
+        self.ensure_directory()
+
         self.init(**extra_data)
 
     def init(self, **extra_data):
