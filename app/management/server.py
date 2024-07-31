@@ -61,6 +61,8 @@ class GameConsole:
     def print(self):
         print(self.get_str())
 
+# TODO by directly subclassing GameServer, extra server types can completely override all behaviour
+# maybe change to use a class only used for storing data and providing extra callbacks, without overriding anything from this class
 class GameServer:
     default_type: str = None
 

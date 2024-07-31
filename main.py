@@ -19,9 +19,11 @@ add_arg("debug", False, action="store_true")
 
 args = parser.parse_args()
 
-ServerManager.load_builtin_games()
+ServerManager.load_builtin_plugins()
 
 server_manager = ServerManager(args.directory)
+# TODO move this to the lifespan function on the backend once plugins can reload
+server_manager.load_plugins()
 
 # TODO finish writing main.py once everything is in a workable state lol
 

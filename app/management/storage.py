@@ -117,6 +117,7 @@ class StorageManager:
         return self.get_bin(game, bin).get_file_or_dir(file)
 
     def get_server_folder(self, server: 'GameServer'):
+        # FUTURE use UUIDs for server directories instead of type and name
         return self.servers_dir.get_directory(server.game).get_directory(server.id)
     
     def get_base_directory(self, dir: Directory, path: str):

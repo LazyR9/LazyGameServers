@@ -54,9 +54,8 @@ class ServerManager:
         return classes
     
     @classmethod
-    def load_builtin_games(cls):
-        # TODO this works but idk if this is the best way to do this or what a better way would be...
-        cls.CLASSES = cls.import_classes_from_directory(Directory(os.path.dirname(__file__)).get_directory("builtin_games"))
+    def load_builtin_plugins(cls):
+        cls.CLASSES = cls.import_classes_from_directory(Directory("plugins"))
 
     @classmethod
     def get_class(cls, class_name):
@@ -186,4 +185,7 @@ class ServerManager:
         self.servers_yaml.ensure_parent_exists()
         with self.servers_yaml.open("w") as file:
             yaml.safe_dump([s.as_dict(flat=True, filter=MetadataFlags.SETTINGS) for s in self.servers], file, sort_keys=False)
-        
+
+    def load_plugins(self):
+        # TODO improve the way plugins are loaded so that they can do more than just provide server types
+        self.CLASSES += self.import_classes_from_directory(self.storage_manager.base_dir.get_directory("plugins"))
