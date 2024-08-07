@@ -1,11 +1,13 @@
-import os
+import traceback
 import yaml
 import importlib.util
 from pathlib import Path
 
+from app.management.config import Config
 from app.management.metadata import MetadataFlags
 from app.management.storage import Directory, File, StorageManager
 from app.management.server import GameServer, GameServerStatus
+from app.management.upgrades import upgrade
 
 class ServerManager:
     CLASSES = []
@@ -72,6 +74,9 @@ class ServerManager:
 
         self.servers_yaml = self.storage_manager.servers_dir.get_file("servers.yml")
         self.settings_yaml = self.storage_manager.base_dir.get_file("settings.yml")
+
+        self.config = None
+        self.should_save_config = True
 
         self.servers: list[GameServer] = []
 
@@ -145,25 +150,38 @@ class ServerManager:
         if self.settings_yaml.exists():
             self.reload_settings()
         else:
+            self.config = Config()
+
             for cls in self.CLASSES:
                 if cls.default_type is not None:
+                    self.config.class_map[cls.default_type] = cls.__name__
                     self.register_class(cls.default_type, cls, False)
 
     def reload_settings(self):
-        self.class_map.clear()
-        with self.settings_yaml.open() as file:
-            try:
-                settings = yaml.safe_load(file)
-            except yaml.YAMLError as error:
-                print("Error reading settings.yml:", error)
+        with self.settings_yaml.open("rt") as file_io:
+            config_dict = yaml.safe_load(file_io)
 
-        for game, class_ in settings['class_map'].items():
+        try:
+            upgrade(self, config_dict)
+            self.config = Config.model_validate(config_dict)
+        except Exception as error:
+            print("Error while upgrading config!")
+            traceback.print_exception(error)
+            # Unable to load config, use default and don't override the user config with it
+            self.config = Config()
+            self.should_save_config = False
+
+        # TODO move this to Config class so there isn't any confusion over Manager.class_map and Config.class_map
+        self.class_map.clear()
+        for game, class_ in self.config.class_map.items():
             self.register_class(game, self.get_class(class_), True)
 
     def save_settings(self):
+        if not self.should_save_config:
+            return
         self.settings_yaml.ensure_parent_exists()
-        with self.settings_yaml.open("w") as file:
-            yaml.safe_dump({"class_map": {k: v.__name__ for k, v in self.class_map.items()}}, file)
+        with self.settings_yaml.open("wt") as file_io:
+            yaml.safe_dump(self.config.model_dump(), file_io)
 
     def load_servers(self):
         if self.servers_yaml.exists():
