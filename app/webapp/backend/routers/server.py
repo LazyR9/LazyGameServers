@@ -13,7 +13,7 @@ router = APIRouter(
     prefix="/{type}/{id}",
 )
 
-def server_dependency(type: str, id: str, request: Request, response: Response):
+def server_dependency(type: str, id: str, request: Request):
     manager: ServerManager = request.app.state.server_manager
     server = manager.get_server(urllib.parse.unquote(type), id)
     if server is None:
@@ -22,7 +22,7 @@ def server_dependency(type: str, id: str, request: Request, response: Response):
 
 ServerDependency = Annotated[GameServer, Depends(server_dependency)]
 
-def server_file_dependency(server: ServerDependency, path: str, request: Request):
+def server_file_dependency(server: ServerDependency, path: str):
     file = server.get_directory().get_file_or_dir(path)
     if file is None:
         raise HTTPException(404)
@@ -70,7 +70,7 @@ MESSAGE_STREAM_DELAY = 1 # in seconds
 MESSAGE_STREAM_RETRY_TIMEOUT = 15000 # in milliseconds
 
 @router.get('/stream')
-async def console_stream(server: ServerDependency, request: Request):
+async def event_stream(server: ServerDependency, request: Request):
     async def event_generator():
         events: list[GameServerEvent] = []
         def add_to_event_queue(event: GameServerEvent):
@@ -100,8 +100,10 @@ async def console_stream(server: ServerDependency, request: Request):
     # and the EventSource API just doesn't work if the request has compression.
     return EventSourceResponse(event_generator(), headers={"Cache-Control": "no-cache, no-transform"})
 
+# A trailing slash is required with the variable in the route below,
+# this is here so that it can be omitted
 @router.get('/files')
-def get_files(server: ServerDependency):
+def get_root_directory(server: ServerDependency):
     return get_file(server, '')
 
 @router.get('/files/{path:path}')
