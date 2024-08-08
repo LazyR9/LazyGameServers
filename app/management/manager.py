@@ -206,5 +206,7 @@ class ServerManager:
             yaml.safe_dump([s.as_dict(flat=True, filter=MetadataFlags.SETTINGS) for s in self.servers], file, sort_keys=False)
 
     def load_plugins(self):
+        plugins_dir = self.storage_manager.base_dir.get_directory("plugins")
+        plugins_dir.ensure_exists()
         # TODO improve the way plugins are loaded so that they can do more than just provide server types
-        self.CLASSES += self.import_classes_from_directory(self.storage_manager.base_dir.get_directory("plugins"))
+        self.CLASSES += self.import_classes_from_directory(plugins_dir)
