@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.management.upgrades import CURRENT_VERSION
 
@@ -19,3 +20,8 @@ class Config(BaseModel):
 
     version: int = CURRENT_VERSION
 
+
+class EnvConfig(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="LGS_", env_file=".env", extra="ignore")
+    
+    TOKEN_SECRET: str = "dev secret"

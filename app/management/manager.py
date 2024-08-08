@@ -3,7 +3,7 @@ import yaml
 import importlib.util
 from pathlib import Path
 
-from app.management.config import Config
+from app.management.config import Config, EnvConfig
 from app.management.metadata import MetadataFlags
 from app.management.storage import Directory, File, StorageManager
 from app.management.server import GameServer, GameServerStatus
@@ -77,6 +77,7 @@ class ServerManager:
 
         self.config = None
         self.should_save_config = True
+        self.env_config = EnvConfig()
 
         self.servers: list[GameServer] = []
 
