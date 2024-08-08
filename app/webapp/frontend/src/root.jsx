@@ -3,6 +3,7 @@ import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
 import Container from "react-bootstrap/Container";
 import useAuth from "./hooks/useAuth";
+import CheckSetup from "./components/CheckSetup";
 
 export default function Root() {
   const { auth, setAuth } = useAuth();
@@ -14,6 +15,7 @@ export default function Root() {
 
   return (
     <>
+      <CheckSetup />
       <Navbar expand="sm" bg="primary">
         <Container fluid="xxl">
           <Navbar.Brand as={Link} to="/">

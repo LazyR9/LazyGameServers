@@ -15,6 +15,7 @@ class Config(BaseModel):
     class_map: dict[str, str] = {}
 
     password_hash: str | None = None
+    setup: bool = False
 
     version: int = CURRENT_VERSION
 
