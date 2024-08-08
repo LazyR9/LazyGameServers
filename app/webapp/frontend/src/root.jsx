@@ -13,6 +13,10 @@ export default function Root() {
     setAuth({});
   }
 
+  // TODO show an error page if the backend cannot be reached, as right now the frontend just kinda breaks.
+  // If possible, a seperate error should be shown for when there isn't a network connection
+  // and for when there is but the backend still isn't responding for some reason.
+
   return (
     <>
       <CheckSetup />
