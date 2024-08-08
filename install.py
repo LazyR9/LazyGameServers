@@ -4,10 +4,9 @@ import secrets
 import shutil
 import os
 import subprocess
+import sys
 import venv
 import string
-
-import dotenv
 
 CONF_NAME = "lazy_game_servers.conf"
 
@@ -74,6 +73,9 @@ if not os.path.exists("venv"):
 print("Installing dependecies...")
 subprocess.run(["venv/bin/pip", "install", "-r", "requirements.txt"])
 
+# Workaround to import dotenv from the venv after we set it up
+sys.path.append(f"venv/lib/python3.{sys.version_info.minor}/site-packages")
+import dotenv
 
 print("Settings up .env file...")
 if dotenv.get_key(".env", "LGS_TOKEN_SECRET") is None:
