@@ -4,40 +4,55 @@ import { getServerEndpoint } from "./utils";
 import { Button, Spinner } from "react-bootstrap";
 import { IconContext } from "react-icons/lib";
 import { BsCheck2, BsXLg } from "react-icons/bs";
+import useAuthFetch from "./hooks/useAuthFetch";
 
-export const useFetchQuery = ({ queryKey, apiEndpoint, ...otherOptions }) => useQuery({
-    queryKey,
-    queryFn: async () => {
-        const response = await fetch(apiEndpoint);
-        if (!response.ok) {
-            throw new ResponseError(response);
+export function useJsonFetch({ endpoint, auth = false, method = "GET", ...fetchArgs }) {
+    const authFetch = useAuthFetch();
+    const fetchFn = auth ? authFetch : fetch;
+
+    async function jsonFetch(payload) {
+        const finalFetchArgs = {
+            ...fetchArgs,
+            method,
         }
+        if (payload) {
+            finalFetchArgs.headers = {
+                ...finalFetchArgs.headers,
+                "Content-Type": "application/json",
+            };
+            finalFetchArgs.body = JSON.stringify(payload);
+        }
+        const response = await fetchFn(endpoint, finalFetchArgs);
+        if (!response.ok)
+            throw new ResponseError(response);
         return await response.json();
-    },
-    ...otherOptions,
-})
+    }
+
+    return jsonFetch
+}
+
+export function useFetchQuery({ queryKey, apiEndpoint, auth = false, ...otherOptions }) {
+    const jsonFetch = useJsonFetch({ endpoint: apiEndpoint, auth });
+    return useQuery({
+        queryKey,
+        queryFn: () => jsonFetch(),
+        ...otherOptions,
+    });
+}
 
 export const useServerQuery = ({ type, serverId }) => useFetchQuery({
     queryKey: ["servers", type, serverId],
     apiEndpoint: getServerEndpoint(type, serverId),
+    auth: true,
 })
 
-export const useFetchMutation = ({ apiEndpoint, method = "PUT", ...otherOptions }) => useMutation({
-    mutationFn: async (payload) => {
-        const response = await fetch(apiEndpoint, {
-            method,
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-        });
-        if (!response.ok) {
-            throw new ResponseError(response);
-        }
-        return await response.json();
-    },
-    ...otherOptions,
-})
+export function useFetchMutation({ apiEndpoint, method = "PUT", auth = false, ...otherOptions }) {
+    const jsonFetch = useJsonFetch({ endpoint: apiEndpoint, auth, method })
+    return useMutation({
+        mutationFn: jsonFetch,
+        ...otherOptions,
+    });
+}
 
 export function MutationButton({ mutation, text = "Save", pending = <Spinner size="sm" />, success = <BsCheck2 />, error = <BsXLg />, ...props }) {
     return (

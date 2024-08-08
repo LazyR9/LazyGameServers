@@ -1,5 +1,6 @@
 import argparse
 import os
+from dotenv import load_dotenv
 import uvicorn
 
 from app.management.manager import ServerManager
@@ -18,6 +19,7 @@ add_arg("debug", False, action="store_true")
 
 
 args = parser.parse_args()
+load_dotenv()
 
 ServerManager.load_builtin_plugins()
 

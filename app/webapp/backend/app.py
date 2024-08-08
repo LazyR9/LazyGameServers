@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from app.management.manager import ServerManager
 
 from .routers import servers
+from . import auth
 
 # i have to inject this code because starlette treats %2F as a normal slash.
 # the injection method is a copy of _utils.get_route_path,
@@ -33,3 +34,4 @@ async def lifespan(app: FastAPI):
 app = FastAPI(root_path="/api", lifespan=lifespan)
 
 app.include_router(servers.router)
+app.include_router(auth.router)

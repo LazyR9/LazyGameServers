@@ -3,10 +3,12 @@ from fastapi import APIRouter, Depends
 from ..dependencies import ManagerDependency
 from ..models import Server
 from .server import router as serverRouter
+from ..auth import get_current_user
 
 router = APIRouter(
     prefix="/servers",
     tags=["servers"],
+    dependencies=[Depends(get_current_user)]
 )
 router.include_router(serverRouter)
 

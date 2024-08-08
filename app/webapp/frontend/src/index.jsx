@@ -11,8 +11,11 @@ import ErrorPage, { ResponseError } from './errors';
 
 import Server from './routes/server';
 import Dashboard from './routes/dashboard';
+import SignIn from './routes/signin';
+import SignInRequired from './components/AuthRequired';
 
 import './index.css';
+import { AuthProvider } from './context/AuthProvider';
 
 // TODO seperate some sub-routes into seperate files because this will probably get really big otherwise
 const router = createBrowserRouter([
@@ -25,24 +28,29 @@ const router = createBrowserRouter([
         // TODO better way to handle nested path with common prefix? can't use children because that would render all elements above it...
         children: [
           {
-            path: "servers",
-            element: <Dashboard />,
-          },
-          {
-            path: "servers/:type",
-            element: <div>nothing here...</div>,
-          },
-          {
-            path: "servers/:type/:serverId/:tab?/*",
-            element: <Server />,
-          },
-          {
-            path: "dashboard",
-            element: <Dashboard />,
+            element: <SignInRequired />,
+            children: [
+              {
+                path: "servers",
+                element: <Dashboard />,
+              },
+              {
+                path: "servers/:type",
+                element: <div>nothing here...</div>,
+              },
+              {
+                path: "servers/:type/:serverId/:tab?/*",
+                element: <Server />,
+              },
+              {
+                path: "dashboard",
+                element: <Dashboard />,
+              },
+            ],
           },
           {
             path: "signin",
-            element: <p>No actual sign in page yet...</p>,
+            element: <SignIn />,
           },
           {
             path: "*",
@@ -74,8 +82,10 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={query}>
-      <RouterProvider router={router} />
-      <ReactQueryDevtools />
+      <AuthProvider>
+        <RouterProvider router={router} />
+        <ReactQueryDevtools />
+      </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>
 );

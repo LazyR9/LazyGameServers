@@ -8,8 +8,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import ServerSettings from "../components/Settings";
 import ServerFileBrowser from "../components/FileBrowser";
 import { getServerEndpoint } from "../utils";
+import { EventSourcePolyfill } from "event-source-polyfill";
 
 import "./server.css";
+import useAuth from "../hooks/useAuth";
 
 // TODO organize imports in all files
 
@@ -50,8 +52,10 @@ export default function Server() {
   const queryClient = useQueryClient();
   const apiEndpoint = getServerEndpoint(type, serverId);
   const queryKey = useMemo(() => ["servers", type, serverId], [type, serverId]);
+
+  const { auth } = useAuth();
   useEffect(() => {
-    const eventSource = new EventSource(apiEndpoint + "/stream");
+    const eventSource = new EventSourcePolyfill(apiEndpoint + "/stream", { headers: {"Authorization": `Bearer ${auth.access_token}`} });
 
     eventSource.addEventListener("console_line", (event) => {
       queryClient.setQueryData([...queryKey, "console"], (data) => ({
@@ -81,11 +85,19 @@ export default function Server() {
     });
 
     return () => eventSource.close();
-  }, [apiEndpoint, queryKey, queryClient]);
+  }, [apiEndpoint, queryKey, queryClient, auth]);
 
   if (isError) {
-    if (error instanceof ResponseError && error.response.status === 404) {
-      return <ErrorPage title="Server not Found!" subtitle={<>Server <code>{type}/{serverId}</code> doesn't exist!</>} />;
+    if (error instanceof ResponseError) {
+      switch (error.response.status) {
+        case 404:
+          return <ErrorPage title="Server not Found!" subtitle={<>Server <code>{type}/{serverId}</code> doesn't exist!</>} />;
+        case 401:
+        case 403:
+          return <ErrorPage title="Not authorized!" subtitle="You are not authorized to view this server." />
+        default:
+          break;
+      }
     }
     return <ErrorPage message={error.message} />
   }

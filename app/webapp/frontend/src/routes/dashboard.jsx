@@ -23,6 +23,7 @@ export function ServerList() {
   const { isPending, isError, data: servers, error } = useFetchQuery({
     queryKey: ['servers'],
     apiEndpoint: '/api/servers',
+    auth: true,
     // TODO make the refetch interval user configurable
     refetchInterval: 10000,
   });
@@ -52,7 +53,7 @@ export function ServerList() {
 export function NewServerButton() {
   const [show, setShow] = useState(false);
 
-  const mutation = useFetchMutation({ apiEndpoint: "/api/servers", method: "POST" });
+  const mutation = useFetchMutation({ apiEndpoint: "/api/servers", method: "POST", auth: true });
 
   return (
     <>

@@ -14,5 +14,7 @@ so that the new value can get set from the old one.
 class Config(BaseModel):
     class_map: dict[str, str] = {}
 
+    password_hash: str | None = None
+
     version: int = CURRENT_VERSION
 

@@ -5,6 +5,7 @@ import { getServerEndpoint } from "../utils";
 import { useParams } from "react-router-dom";
 
 import "./Console.css";
+import useAuthFetch from "../hooks/useAuthFetch";
 
 export default function ServerConsole() {
   const { type, serverId } = useParams();
@@ -15,9 +16,12 @@ export default function ServerConsole() {
 
   const queryKey = useMemo(() => ["servers", type, serverId, "console"], [type, serverId]);
 
+  const authFetch = useAuthFetch();
+
   const { isSuccess, data: serverConsole } = useFetchQuery({
     queryKey,
     apiEndpoint,
+    auth: true,
   });
 
   const ref = useRef();
@@ -39,7 +43,7 @@ export default function ServerConsole() {
         onSubmit={(event) => {
           event.preventDefault();
           setEnteredCmd("");
-          fetch(apiEndpoint, {
+          authFetch(apiEndpoint, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

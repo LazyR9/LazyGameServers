@@ -44,7 +44,7 @@ export default function ServerSettings() {
 
   useMemo(() => groupSettings(server), [server]);
 
-  const mutation = useFetchMutation({ apiEndpoint: getServerEndpoint(type, serverId) });
+  const mutation = useFetchMutation({ apiEndpoint: getServerEndpoint(type, serverId), auth: true });
 
   return (
     <Form onSubmit={(e) => {

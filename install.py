@@ -1,9 +1,12 @@
 import platform
+import secrets
 import shutil
 import os
 import subprocess
 import venv
 import string
+
+import dotenv
 
 CONF_NAME = "lazy_game_servers.conf"
 
@@ -62,11 +65,19 @@ CONFIG_REPLACABLE = {
     "FRONTEND_ASSETS_PATH": FRONTEND_ASSETS_PATH,
 }
 
-print("Creating venv...")
+if not os.path.exists("venv"):
+    print("Creating venv...")
+    # symlinks should be False on Windows, but this script doesn't run on Windows so it's just hardcoded
+    venv.create("venv", symlinks=True, with_pip=True)
 
-# symlinks should be False on Windows, but this script doesn't run on Windows so it's just hardcoded
-venv.create("venv", symlinks=True, with_pip=True)
+print("Installing dependecies...")
 subprocess.run(["venv/bin/pip", "install", "-r", "requirements.txt"])
+
+
+print("Settings up .env file...")
+if dotenv.get_key(".env", "LGS_TOKEN_SECRET") is None:
+    dotenv.set_key(".env", "LGS_TOKEN_SECRET", secrets.token_hex(64))
+
 
 print("Building frontend...")
 

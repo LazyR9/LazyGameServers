@@ -15,7 +15,7 @@ export default function ServerFileBrowser() {
 
   const queryKey = ["servers", type, serverId, "files", path];
   const apiEndpoint = getServerEndpoint(type, serverId) + '/files/' + path;
-  const { isPending, isError, error, data: file } = useFetchQuery({ queryKey, apiEndpoint });
+  const { isPending, isError, error, data: file } = useFetchQuery({ queryKey, apiEndpoint, auth: true });
 
   if (isPending) return <div style={{ textAlign: "center" }}><Spinner /></div>
 
@@ -99,7 +99,7 @@ function FileItem({ file }) {
 
 function File({ file, apiEndpoint }) {
   const [contents, setContents] = useState(file.contents);
-  const mutation = useFetchMutation({ apiEndpoint });
+  const mutation = useFetchMutation({ apiEndpoint, auth: true });
 
   const link = useWorkaround("..");
 
