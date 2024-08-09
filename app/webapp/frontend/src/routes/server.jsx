@@ -12,6 +12,7 @@ import { EventSourcePolyfill } from "event-source-polyfill";
 
 import "./server.css";
 import useAuth from "../hooks/useAuth";
+import useAuthFetch from "../hooks/useAuthFetch";
 
 // TODO organize imports in all files
 
@@ -24,6 +25,8 @@ export function ServerIndicator({ server, className }) {
 }
 
 export function ServerControls({ server, children, ...props }) {
+  const authFetch = useAuthFetch();
+
   const apiEndpoint = getServerEndpoint(server.game.value, server.id.value);
   let start = "Start";
   let stop = "Stop";
@@ -37,8 +40,8 @@ export function ServerControls({ server, children, ...props }) {
   }
   return (
     <ButtonGroup>
-      <Button disabled={server.status.value !== "STOPPED"} onClick={() => fetch(apiEndpoint + "/start")} {...props}>{start}</Button>
-      <Button disabled={server.status.value !== "RUNNING"} onClick={() => fetch(apiEndpoint + "/stop")} {...props}>{stop}</Button>
+      <Button disabled={server.status.value !== "STOPPED"} onClick={() => authFetch(apiEndpoint + "/start")} {...props}>{start}</Button>
+      <Button disabled={server.status.value !== "RUNNING"} onClick={() => authFetch(apiEndpoint + "/stop")} {...props}>{stop}</Button>
     </ButtonGroup>
   );
 }
