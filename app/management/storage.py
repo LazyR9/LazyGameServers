@@ -104,6 +104,7 @@ class Directory(File):
     def _get_file_path(self, filename):
         return os.path.join(self.path, filename)
 
+# TODO rewrite some storage manager code to use file objects instead of path strings
 class StorageManager:
     def __init__(self, base_dir = '.'):
         self.base_dir = Directory(base_dir)
@@ -150,13 +151,13 @@ class StorageManager:
         """
         src_file = self.get_shared_file(game, bin, file)
         if src_file is None:
-            raise FileNotFoundError(f"Source file {src_file} doesn't exist!")
+            raise FileNotFoundError(f"Source file {file} doesn't exist!")
         if dest_name is None:
-            dest_name = os.path.basename(src_file)
-        dest_file = os.path.join(self.get_server_folder(server), dest_name)
+            dest_name = os.path.basename(src_file.path)
+        dest_file = os.path.join(self.get_server_folder(server).path, dest_name)
         if os.path.exists(dest_file):
             raise FileExistsError(f"File {dest_file} already exists!")
-        os.symlink(os.path.abspath(src_file), dest_file)
+        os.symlink(os.path.abspath(src_file.path), dest_file)
 
     def remove_shared_file_from_server(self, server: 'GameServer', file):
         file_path = self.get_file_from_server(server, file)
