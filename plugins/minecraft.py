@@ -51,8 +51,11 @@ class MinecraftServer(GameServer):
             if latest_version not in cls._version_data:
                 with urllib.request.urlopen(cls.get_version_from_manifest(latest_version)["url"]) as response:
                     cls._version_data[latest_version] = json.load(response)
+            file.ensure_parent_exists()
             urllib.request.urlretrieve(cls._version_data[latest_version]["downloads"]["server"]["url"], file.path)
 
+        libraries = self.storage_manager.get_bin(self.default_type, "serverjars").get_directory("libraries")
+        libraries.ensure_exists()
         self.add_shared_file(self.server_jar, "serverjars")
         self.add_shared_file("libraries", "serverjars")
         
