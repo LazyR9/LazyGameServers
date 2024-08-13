@@ -15,7 +15,7 @@ router = APIRouter(
 
 def server_dependency(type: str, id: str, request: Request):
     manager: ServerManager = request.app.state.server_manager
-    server = manager.get_server(urllib.parse.unquote(type), id)
+    server = manager.get_server(urllib.parse.unquote(type), urllib.parse.unquote(id))
     if server is None:
         raise HTTPException(404)
     return server
