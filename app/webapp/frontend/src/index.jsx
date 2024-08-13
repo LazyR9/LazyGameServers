@@ -17,6 +17,7 @@ import SignInRequired from './components/AuthRequired';
 import './index.css';
 import { AuthProvider } from './context/AuthProvider';
 import Setup from './routes/setup';
+import Settings from './routes/settings';
 
 // TODO seperate some sub-routes into seperate files because this will probably get really big otherwise
 const router = createBrowserRouter([
@@ -46,6 +47,10 @@ const router = createBrowserRouter([
               {
                 path: "dashboard",
                 element: <Dashboard />,
+              },
+              {
+                path: "settings",
+                element: <Settings />,
               },
             ],
           },

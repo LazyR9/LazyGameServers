@@ -31,6 +31,7 @@ export default function Root() {
               <Nav.Link as={NavLink} to="/dashboard">Dashboard</Nav.Link>
             </Nav>
             <Nav>
+              <Nav.Link as={NavLink} to="/settings">Settings</Nav.Link>
               {auth.access_token ? <Nav.Link onClick={() => signOut()}>Sign Out</Nav.Link> : <Nav.Link as={NavLink} to="/signin">Sign In</Nav.Link>}
             </Nav>
           </Navbar.Collapse>

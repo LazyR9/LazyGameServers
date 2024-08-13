@@ -8,6 +8,7 @@ from app.management.metadata import MetadataFlags
 from app.management.storage import Directory, File, StorageManager
 from app.management.server import GameServer, GameServerStatus
 from app.management.upgrades import upgrade
+from app.management.version import VersionManager
 
 class ServerManager:
     CLASSES = []
@@ -82,6 +83,8 @@ class ServerManager:
         self.servers: list[GameServer] = []
 
         self.class_map: dict[str, type[GameServer]] = {}
+        
+        self.version_manager = VersionManager()
 
     def register_class(self, game, class_, force = False):
         if not force and game in self.class_map:

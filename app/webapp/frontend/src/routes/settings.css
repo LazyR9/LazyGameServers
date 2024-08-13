@@ -1,0 +1,12 @@
+.version {
+    text-decoration: underline dotted;
+    cursor: help;
+}
+
+.version-tooltip {
+    --bs-tooltip-max-width: 100vw;
+}
+
+.settings-container {
+    background-color: #0d6dfd63;
+}

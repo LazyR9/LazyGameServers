@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from app.management.manager import ServerManager
 
-from .routers import servers, setup
+from .routers import servers, setup, settings
 from . import auth
 
 # i have to inject this code because starlette treats %2F as a normal slash.
@@ -36,3 +36,4 @@ app = FastAPI(root_path="/api", lifespan=lifespan)
 app.include_router(servers.router)
 app.include_router(auth.router)
 app.include_router(setup.router)
+app.include_router(settings.router)
