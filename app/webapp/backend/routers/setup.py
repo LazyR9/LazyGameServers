@@ -10,7 +10,7 @@ class SetupArgs(BaseModel):
     password: str
 
 
-router = APIRouter(prefix="/setup")
+router = APIRouter(prefix="/setup", tags=["setup"])
 
 @router.get("")
 def check_setup(manager: ManagerDependency):
