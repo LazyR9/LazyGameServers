@@ -12,26 +12,26 @@ P = ParamSpec('P')
 is_windows = sys.platform == "win32"
 
 def get_command(command: str, replacements):
-   return shlex.split(command.format_map(replacements))
+    return shlex.split(command.format_map(replacements))
 
 def send_ctrl_c(process: subprocess.Popen):
-   """
-   Sends a Ctrl-C event if on Windows,
-   otherwise just uses `terminate()` to gracefully stop a program
-   """
-   if is_windows:
-      process.send_signal(signal.CTRL_C_EVENT)
-   else:
-      process.terminate()
+    """
+    Sends a Ctrl-C event if on Windows,
+    otherwise just uses `terminate()` to gracefully stop a program
+    """
+    if is_windows:
+        process.send_signal(signal.CTRL_C_EVENT)
+    else:
+        process.terminate()
 
 def correct_file_seperator(path: str):
-   """
-   Replaces any "/" characters in path with the correct OS path seperators.
+    """
+    Replaces any "/" characters in path with the correct OS path seperators.
 
-   :param path: The path to correct file seperators
-   :return: A new corrected string
-   """
-   return os.path.normpath(path)
+    :param path: The path to correct file seperators
+    :return: A new corrected string
+    """
+    return os.path.normpath(path)
 
 class RepeatedTimer:
     def __init__(self, interval: int, function: Callable[P, Any], *args: P.args, **kwargs: P.kwargs):
