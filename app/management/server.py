@@ -144,7 +144,7 @@ class GameServer:
         `kwargs` is any extra data that was found in the config that didn't match any fields defined in the class.
         """
 
-    def setup(self):
+    async def setup(self, wizard):
         """
         Does first time setup on this server.
         Usually should only be called the first time the server is created,

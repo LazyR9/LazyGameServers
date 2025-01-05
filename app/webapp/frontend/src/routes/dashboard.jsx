@@ -1,4 +1,4 @@
-import { Badge, Button, Card, CardText, Form, Modal } from 'react-bootstrap';
+import { Badge, Button, Card, CardText } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { BsFillPlayFill, BsFillStopFill } from 'react-icons/bs';
 import { IconContext } from 'react-icons/lib';
@@ -6,9 +6,10 @@ import { IconContext } from 'react-icons/lib';
 import { formatBytes } from '../utils';
 
 import './dashboard.css';
-import { useFetchMutation, useFetchQuery } from '../querys';
 import { ServerControls, ServerIndicator } from './server';
 import { useState } from 'react';
+import Wizard from '../components/Wizard';
+import { useFetchQuery } from '../querys';
 
 export default function Dashboard() {
   return (
@@ -53,37 +54,10 @@ export function ServerList() {
 export function NewServerButton() {
   const [show, setShow] = useState(false);
 
-  const mutation = useFetchMutation({ apiEndpoint: "/api/servers", method: "POST", auth: true });
-
   return (
     <>
       <Button onClick={() => setShow(true)}>New</Button>
-      <Modal show={show} onHide={() => setShow(false)} centered>
-        <Modal.Header>
-          <Modal.Title>New Server</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form id='new-server-form' onSubmit={(e) => {
-            e.preventDefault();
-            console.log(e.target[0].value)
-            console.log(e.target[1].value)
-            mutation.mutate({ id: e.target[0].value, type: e.target[1].value });
-          }}>
-            <Form.Group>
-              <Form.Label>ID</Form.Label>
-              <Form.Control />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>Type</Form.Label>
-              <Form.Control />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant='secondary' onClick={() => setShow(false)}>Cancel</Button>
-          <Button type='submit' form='new-server-form' onClick={() => setShow(false)}>Create</Button>
-        </Modal.Footer>
-      </Modal>
+      <Wizard show={show} onHide={() => setShow(false)} url="/api/ws/servers/create" host="localhost:8000" />
     </>
   )
 }

@@ -1,0 +1,9 @@
+.center-middle-element {
+    display: flex;
+    justify-content: space-between;
+}
+
+.center-middle-element > :first-child, .center-middle-element > :last-child {
+    flex-grow: 1;
+    flex-basis: 0;
+}

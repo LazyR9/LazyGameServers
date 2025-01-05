@@ -35,6 +35,9 @@ class File:
     def open(self, mode="rt"):
         return open(self.path, mode)
     
+    def delete(self):
+        return os.remove(self.path)
+    
     def get_parent(self):
         if self._parent is None:
             self._parent = Directory(os.path.dirname(self.path))
@@ -81,6 +84,9 @@ class Directory(File):
             return File(path, self)
         else:
             return Directory(path, self)
+    
+    def delete(self):
+        return shutil.rmtree(self.path)
         
     def ensure_exists(self):
         os.makedirs(self.path, exist_ok=True)

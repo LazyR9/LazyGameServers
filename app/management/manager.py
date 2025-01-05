@@ -9,6 +9,7 @@ from app.management.storage import Directory, File, StorageManager
 from app.management.server import GameServer, GameServerStatus
 from app.management.upgrades import upgrade
 from app.management.version import VersionManager
+from app.management.wizard import CancelledError, Wizard
 
 class ServerManager:
     CLASSES = []
@@ -92,20 +93,29 @@ class ServerManager:
             raise KeyError(f"Game {game} is already registered!")
         self.class_map[game] = class_
 
-    def create_server(self, game, id, **kwargs):
+    async def create_server(self, game, id, wizard: Wizard, **kwargs):
         """
         Creates a new server and does first time initalization.
 
         To just create a server object for an existing server, use `create_server_obj()`.
 
         Params are the same as the `GameServer` class.
+        
         :raises KeyError: If a server with the same id and type already exists.
         :return: The created server.
         """
         if self.get_server(game, id) is not None:
             raise KeyError(f"Server {id} of type {game} already exists!")
         server = self.create_server_obj(game, **kwargs, id=id)
-        server.setup()
+        try:
+            await server.setup(wizard)
+        except CancelledError:
+            # clean up directory which may have gotten created at this point
+            server.get_directory().delete()
+            raise
+        self.servers.append(server)
+        if not wizard.finished:
+            await wizard.finish()
         return server
 
     def create_server_obj(self, game: str, **kwargs):
@@ -126,7 +136,6 @@ class ServerManager:
         else:
             found_class = GameServer
         server = found_class(self.storage_manager, **kwargs, game=game)
-        self.servers.append(server)
         return server
 
     def auto_start_servers(self):
@@ -201,7 +210,8 @@ class ServerManager:
             except yaml.YAMLError as error:
                 print("Error reading servers.yml:", error)
         for server in servers:
-            self.create_server_obj(**server)
+            server_obj = self.create_server_obj(**server)
+            self.servers.append(server_obj)
 
     def save_servers(self):
         self.servers_yaml.ensure_parent_exists()
