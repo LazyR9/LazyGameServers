@@ -304,7 +304,6 @@ class GameServer:
         # remove deregistered listeners from list
         self._listeners = [listener for listener in self._listeners if listener._registered]
         for listener in self._listeners:
-            event.listener = listener
             # the events are filtered in the call method, so this loops over all listeners
             listener.call(event)
 

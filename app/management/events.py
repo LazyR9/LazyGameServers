@@ -76,7 +76,9 @@ class GameServerEventListener:
     def call(self, event):
         if self.filter is not None and event.type != self.filter:
             return
+        event.listener = self
         self.func(event)
+        event.listener = None
 
 # mandatory "i hate circular imports" here
 from app.management.server import *
