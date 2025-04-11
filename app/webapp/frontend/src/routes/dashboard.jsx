@@ -1,6 +1,6 @@
 import { Badge, Button, Card, CardText } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { BsFillPlayFill, BsFillStopFill } from 'react-icons/bs';
+import { BsArrowClockwise, BsFillPlayFill, BsFillStopFill } from 'react-icons/bs';
 import { IconContext } from 'react-icons/lib';
 
 import { formatBytes } from '../utils';
@@ -79,6 +79,7 @@ export function ServerListItem({ server }) {
                 <ServerControls server={server} size="sm">
                   <BsFillPlayFill />
                   <BsFillStopFill />
+                  <BsArrowClockwise />
                 </ServerControls>
               </IconContext.Provider>
             </div>

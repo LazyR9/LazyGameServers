@@ -198,6 +198,10 @@ class GameServer:
             self.send_console_command(self.stop_command)
         Thread(target=self._kill_after_timeout, daemon=True).start()
         self.emit_status_event()
+        
+    def restart_server(self):
+        self.add_event_listener(self._restart_on_stop, GameServerEventType.STATUS)
+        self.stop_server()
 
     def send_console_command(self, command):
         """
@@ -368,3 +372,9 @@ class GameServer:
             self.process.wait(self.stop_timeout)
         except subprocess.TimeoutExpired:
             self.process.kill()
+    
+    def _restart_on_stop(self, event: StatusEvent):
+        if event.status != GameServerStatus.STOPPED: return
+
+        event.listener.deregister()        
+        self.start_server()

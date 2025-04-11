@@ -30,20 +30,23 @@ export function ServerControls({ server, children, ...props }) {
   const apiEndpoint = getServerEndpoint(server.game.value, server.id.value);
   let start = "Start";
   let stop = "Stop";
+  let restart = "Restart";
   if (children) {
-    if (children instanceof Array && children.length === 2) {
+    if (children instanceof Array && children.length === 3) {
       start = children[0];
       stop = children[1];
+      restart = children[2];
     } else {
       console.warn("ServerControls got incorrect children!\nPlease provide two seperate elements to be wrapped in the start than stop button.");
     }
   }
-  return (
-    <ButtonGroup>
+  return <>
+    <ButtonGroup className="me-2">
       <Button disabled={server.status.value !== "STOPPED"} onClick={() => authFetch(apiEndpoint + "/start")} {...props}>{start}</Button>
       <Button disabled={server.status.value !== "RUNNING"} onClick={() => authFetch(apiEndpoint + "/stop")} {...props}>{stop}</Button>
     </ButtonGroup>
-  );
+    <Button disabled={server.status.value !== "RUNNING"} onClick={() => authFetch(apiEndpoint + "/restart")} {...props}>{restart}</Button>
+  </>;
 }
 
 export default function Server() {

@@ -55,6 +55,11 @@ def stop_server(server: ServerDependency):
     server.stop_server()
     return temp
 
+@router.get("/restart")
+def restart_server(server: ServerDependency):
+    server.restart_server()
+    return temp
+
 @router.get("/console")
 def get_server_console(server: ServerDependency):
     # TODO send only part of the console and have more load as the user scrolls up
