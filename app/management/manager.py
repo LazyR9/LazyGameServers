@@ -79,8 +79,11 @@ class ServerManager:
         self.servers_yaml = self.storage_manager.servers_dir.get_file("servers.yml")
         self.settings_yaml = self.storage_manager.base_dir.get_file("settings.yml")
 
-        self.config = None
-        self.should_save_config = True
+        self.config = Config()
+        # This will be set to True only when the config is loaded,
+        # so the file doesn't get overwritten until we're sure that
+        # the config was successfully loaded.
+        self.should_save_config = False
         self.env_config = EnvConfig()
 
         self.servers: list[GameServer] = []
@@ -179,6 +182,7 @@ class ServerManager:
         try:
             upgrade(self, config_dict)
             self.config = Config.model_validate(config_dict)
+            self.should_save_config = True
         except Exception as error:
             print("Error while upgrading config!")
             traceback.print_exception(error)
