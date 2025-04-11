@@ -10,13 +10,25 @@ class GameServerEventType(Enum):
 class GameServerEvent:
     type = GameServerEventType.CUSTOM
 
-    def __init__(self, type: GameServerEventType = None, **extra_data):
+    def __init__(self, type: GameServerEventType | None = None, **extra_data):
         if type is not None:
             self.type = type
         # used to store the current listener being called in the dispatch,
         # so that the handler function can easily access it
-        self.listener: GameServerEventListener = None
+        self._listener: GameServerEventListener | None = None
         self.extra_data = extra_data
+    
+    # This is needed so that the type is not None
+    # when this property is accessed in the event listener,
+    # but can still be initally None when created.
+    @property
+    def listener(self):
+        assert self._listener is not None
+        return self._listener
+    
+    @listener.setter
+    def listener(self, value):
+        self._listener = value
 
     def as_dict(self):
         """
@@ -73,7 +85,7 @@ class GameServerEventListener:
     def deregister(self):
         self._registered = False
 
-    def call(self, event):
+    def call(self, event: GameServerEvent):
         if self.filter is not None and event.type != self.filter:
             return
         event.listener = self

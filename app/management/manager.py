@@ -12,7 +12,7 @@ from app.management.version import VersionManager
 from app.management.wizard import CancelledError, Wizard
 
 class ServerManager:
-    CLASSES = []
+    CLASSES: list[type[GameServer]] = []
 
     @staticmethod
     def import_classes_from_directory(directory: Directory, recursion_depth = 0):
@@ -42,7 +42,9 @@ class ServerManager:
         """
         classes: list[type[GameServer]] = []
         spec = importlib.util.spec_from_file_location(Path(file.path).stem, file.path)
+        assert spec is not None
         module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
         spec.loader.exec_module(module)
         for name in dir(module):
             if name.startswith("__"):

@@ -104,7 +104,7 @@ async def event_stream(server: ServerDependency, request: Request):
 # this is here so that it can be omitted
 @router.get('/files')
 def get_root_directory(server: ServerDependency):
-    return get_file(server, '')
+    return get_file(server.get_directory(), '')
 
 @router.get('/files/{path:path}')
 def get_file(file: ServerFileDependency, path):

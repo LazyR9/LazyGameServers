@@ -1,15 +1,14 @@
 from abc import ABC, abstractmethod
-from collections.abc import Collection
 from enum import auto, Enum
-from typing import Any, Callable, Generic, TYPE_CHECKING, TypeVar
+from typing import Any, Callable, Generic, TYPE_CHECKING, Iterable, TypeVar
 
-from .validators import ValidationError
+from .validators import ValidationError, Validator
 
 T = TypeVar('T')
 
 # TODO better name
 class InputRequest(Generic[T]):
-    def __init__(self, message: str, type: Callable[[Any], T], validators: Collection[Callable[[Any], None]] | None = None):
+    def __init__(self, message: str, type: Callable[[Any], T], validators: Iterable[Callable[[Any], None]] | None = None):
         self.message = message
         self.type = type
         self.validators = validators
@@ -24,7 +23,7 @@ class InputRequest(Generic[T]):
         validation_data = {}
         if self.validators is not None:
             for validator in self.validators:
-                if hasattr(validator, "validation_data"):
+                if isinstance(validator, Validator):
                     validation_data.update(validator.validation_data())
         return validation_data
 

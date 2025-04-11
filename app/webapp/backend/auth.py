@@ -1,4 +1,3 @@
-import os
 from fastapi import Depends, HTTPException, APIRouter, Request, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
@@ -15,8 +14,8 @@ ACCESS_TOKEN_EXPIRES_MINUTES = 15
 # workaround for passlib because it is no longer updated and tries to access bcrypt.__about__.__version__
 # this just silences that error
 import bcrypt
-bcrypt.__about__ = lambda: None
-bcrypt.__about__.__version__ = "workaround"
+bcrypt.__about__ = lambda: None # type: ignore
+bcrypt.__about__.__version__ = "workaround" # type: ignore
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
@@ -44,7 +43,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], token_
     except jwt.InvalidTokenError:
         raise credentials_exception
     return payload
-    
 
 class Token(BaseModel):
     access_token: str

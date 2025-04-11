@@ -12,6 +12,6 @@ router = APIRouter(
 )
 router.include_router(serverRouter)
 
-@router.get("")
-def get_servers(manager: ManagerDependency) -> list[Server]:
+@router.get("", response_model=list[Server])
+def get_servers(manager: ManagerDependency):
     return [server.as_dict(True) for server in manager.servers]

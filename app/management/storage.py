@@ -1,6 +1,7 @@
 from enum import Enum, auto
 import os
-from typing import overload, Literal
+import shutil
+from typing import Any, overload, Literal
 
 from app import utils
 
@@ -12,7 +13,7 @@ class FileType(Enum):
 class File:
     type = FileType.FILE
 
-    def __init__(self, path, parent: 'Directory' = None):
+    def __init__(self, path, parent: 'Directory | None' = None):
         self.path = utils.correct_file_seperator(path)
         self.name = os.path.basename(self.path)
         self._parent = parent
@@ -47,7 +48,7 @@ class File:
         self.get_parent().ensure_exists()
     
     def as_dict(self, include_contents = False):
-        value = {"name": self.name, "type": self.type.name}
+        value: dict[str, Any] = {"name": self.name, "type": self.type.name}
         if include_contents:
             contents = self.get_contents()
             if contents is not None:
@@ -61,20 +62,23 @@ class Directory(File):
     type = FileType.DIRECTORY
 
     def get_contents(self, binary = False):
-        return None
+        raise IsADirectoryError("Cannot get contents of directory! (Did you mean list_files() instead?)")
 
-    def list_files(self):
-        return [self.get_file_or_dir(file) for file in os.listdir(self.path)]
+    def list_files(self) -> list[File]:
+        # We ignore return type here because get_file_or_dir() returns None on non-existant path,
+        # but since the argument comes from os.listdir(), the path is guaranteed to exist
+        # (ignoring race conditions because I don't want to think about that)
+        return [self.get_file_or_dir(file) for file in os.listdir(self.path)] # pyright: ignore[reportReturnType]
     
-    def get_file(self, filename):
+    def get_file(self, filename: str):
         path = self._get_file_path(filename)
         return File(path, self)
         
-    def get_directory(self, dirname):
+    def get_directory(self, dirname: str):
         path = self._get_file_path(dirname)
         return Directory(path, self)
     
-    def get_file_or_dir(self, filename):
+    def get_file_or_dir(self, filename) -> 'File | Directory | None':
         if filename in ('', '.'):
             return self
         path = self._get_file_path(filename)
@@ -91,7 +95,10 @@ class Directory(File):
     def ensure_exists(self):
         os.makedirs(self.path, exist_ok=True)
         
-    def as_dict(self, recursion_depth = 0):
+    def as_dict(self, include_contents = False):
+        return self.dir_as_dict(include_contents)
+        
+    def dir_as_dict(self, recursion_depth = 0):
         """
         Gets a dictionary representing this directory, with 
 
@@ -101,13 +108,11 @@ class Directory(File):
         value = super().as_dict(False)
         if recursion_depth:
             value.update({
-                # TODO should we use the contents key like normal files?
-                # use the recursion_depth - 1 for subdirectories, otherwise don't include file contents as that could make the dict really big
-                "files": [file.as_dict(recursion_depth - 1 if file.type == FileType.DIRECTORY else False) for file in self.list_files()]
+                "files": [file.dir_as_dict(recursion_depth - 1) if isinstance(file, Directory) else file.as_dict(False) for file in self.list_files()]
             })
         return value
 
-    def _get_file_path(self, filename):
+    def _get_file_path(self, filename: str):
         return os.path.join(self.path, filename)
 
 # TODO rewrite some storage manager code to use file objects instead of path strings
@@ -127,14 +132,7 @@ class StorageManager:
         # FUTURE use UUIDs for server directories instead of type and name
         return self.servers_dir.get_directory(server.game).get_directory(server.id)
     
-    def get_base_directory(self, dir: Directory, path: str):
-        paths = path.split('/')
-        while paths:
-            current_path = paths.pop(0)
-            dir = dir.get_file(current_path)
-        return dir
-    
-    def get_file_from_server(self, server, file):
+    def get_file_from_server(self, server: 'GameServer', file: str):
         return self.get_server_folder(server).get_file(file)
     
     def create_server_folder(self, server: 'GameServer'):
@@ -144,7 +142,7 @@ class StorageManager:
         os.makedirs(folder)
 
     # TODO have a class for symlinks to make these two functions easier
-    def add_shared_file_to_server(self, game: str, bin: str, file: str, server: 'GameServer', dest_name: str = None): # seperate game for file and server, helpful because sub games are a thing
+    def add_shared_file_to_server(self, game: str, bin: str, file: str, server: 'GameServer', dest_name: str | None = None): # seperate game for file and server, helpful because sub games are a thing
         """
         Add a file from shared storage to a server
 
@@ -166,17 +164,17 @@ class StorageManager:
         os.symlink(os.path.abspath(src_file.path), dest_file)
 
     def remove_shared_file_from_server(self, server: 'GameServer', file):
-        file_path = self.get_file_from_server(server, file)
-        if not os.path.exists(file_path):
+        file = self.get_file_from_server(server, file)
+        if file.exists():
             raise FileNotFoundError(f"File {file} doesn't exist!")
         # TODO is this the best exception here?
-        if not os.path.islink(file_path):
+        if not os.path.islink(file.path):
             raise FileExistsError(f"File {file} is not a symlink!")
         # TODO better check to make sure its in central storage,
         # but also not likely there will be other symlinks in a server folder
-        if self.storage_dir not in os.readlink(file_path):
+        if self.storage_dir.path not in os.readlink(file.path):
             raise FileExistsError(f"File {file} does not point to central storage!")
-        os.unlink(file_path)
+        os.unlink(file.path)
 
 # circular imports yaaaaay (it's just here so type hints work)
 from app.management.server import GameServer

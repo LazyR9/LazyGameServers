@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from fastapi import WebSocket
-from typing import Any, Callable, Collection, TypeVar
+from typing import Any, Callable, Collection, Iterable, TypeVar
 
 from .validators import ValidationError
-from .inputs import InputRequest
+from .inputs import InputRequest, InputType
 
 T = TypeVar('T')
 
@@ -11,7 +11,7 @@ class Wizard(ABC):
     def __init__(self):
         self.finished = False
     
-    async def input(self, message: str, type: Callable[[Any], T], validators: Collection[Callable[[Any], None]] | None = None) -> T:
+    async def input(self, message: str, type: Callable[[Any], T], validators: Iterable[Callable[[Any], None]] | None = None) -> T:
         """
         Asks the user for input, and waits for a response.
         If the response is invalid, it will ask the user again.
@@ -49,13 +49,14 @@ class Wizard(ABC):
         """
     
     @abstractmethod
-    async def _get_input_multi(self, requests: Collection[InputRequest], retry: 'ValidationError | None') -> list[Any]:
+    async def _get_input_multi(self, requests: Iterable[InputRequest], error: 'ValidationError | None') -> list[Any]:
         """
         Asks user for multiple inputs,
         then returns the answers.
         
-        `retry` is whether or not some validation failed and the request should be retried.
-        
+        `error` should be passed if this is being called again because of a validation error,
+        and that the error was caused by an invalid combination of otherwise validation responses.
+        (For example, ensuring that two numbers add up to a third.)
         """
     
     @abstractmethod
@@ -121,7 +122,11 @@ class WebsocketWizard(Wizard):
         
     @staticmethod
     def _get_request_json(request: InputRequest):
-        return {"message": request.message, "input_type": request.type.input_type.name, "validation_data": request.get_validation_data()}
+        return {
+            "message": request.message,
+            "input_type": request.type.input_type.name if isinstance(request.type, InputType) else InputType.STRING.name,
+            "validation_data": request.get_validation_data()
+        }
     
     @staticmethod
     def _validate_type(data: dict[str, Any], type: str):
@@ -143,7 +148,7 @@ class WebsocketWizard(Wizard):
         
         return response
     
-    async def _get_input_multi(self, requests: list[InputRequest], error: ValidationError):
+    async def _get_input_multi(self, requests: Iterable[InputRequest], error: ValidationError | None):
         retries = [request.retry for request in requests]
         if not (any(retries) or error is not None):
             await self.sock.send_json({"type": "input_multiple", "inputs": [self._get_request_json(request) for request in requests]})

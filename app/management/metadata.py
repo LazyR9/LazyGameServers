@@ -20,7 +20,7 @@ class ValueMetadata:
         bool: "bool",
     }
 
-    def __init__(self, flags: MetadataFlags, transform: Callable = None, section = None, name = None, friendly_name = None, type: str = None):
+    def __init__(self, flags: MetadataFlags, transform: Callable | None = None, section = None, name = None, friendly_name: str | None = None, type: str | None = None):
         self.flags = flags
         self.transform = transform
         self.section = section
@@ -33,12 +33,12 @@ class ValueMetadata:
             value = self.transform(value)
         return value
     
-    def get_type(self, override: str):
+    def get_type(self, override: type | str):
         """returns self.type, or uses override to either get from the map or if its a string just use that"""
         # TODO should unknown types throw an error?
         return self.type or (ValueMetadata.TYPE_MAP.get(override, "unknown") if isinstance(override, type) else override)
     
-    def as_dict(self, value, value_type = None, transform = True):
+    def as_dict(self, value: Any, value_type: type | None = None, transform = True):
         if value_type is None:
             value_type = type(value)
         return {

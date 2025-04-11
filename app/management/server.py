@@ -1,7 +1,7 @@
 import subprocess
 import psutil
 from threading import Thread
-from typing import Annotated
+from typing import Annotated, Any
 from enum import Enum, auto
 import datetime
 
@@ -21,7 +21,7 @@ class GameServerStatus(Enum):
     STOPPING = auto()
 
 class GameConsoleLine:
-    def __init__(self, line: str, error: bool = False, timestamp: datetime.datetime = None):
+    def __init__(self, line: str, error: bool = False, timestamp: datetime.datetime | None = None):
         self.timestamp = timestamp or datetime.datetime.now(datetime.timezone.utc)
         self.line = line
         self.error = error
@@ -64,22 +64,24 @@ class GameConsole:
 # TODO by directly subclassing GameServer, extra server types can completely override all behaviour
 # maybe change to use a class only used for storing data and providing extra callbacks, without overriding anything from this class
 class GameServer:
-    default_type: str = None
+    # NOTE: This should only be None on the base class,
+    # all subclasses should provide their own default type!
+    default_type: str | None = None
 
-    id: Setting[str] = None
-    game: Setting[str] = None
+    id: Setting[str]
+    game: Setting[str]
     status: Annotated[GameServerStatus, ValueMetadata(MetadataFlags.NONE, lambda status: status.name)]
 
     # class defaults, can be overridden on subclasses and also differ on the actual objects
 
     # command line command to start server
-    startup_command: Setting[str] = None
+    startup_command: Setting[str] = ""
     # command to send to console to stop server, "^C" means to send a SIGTERM
     stop_command: Setting[str] = "^C"
     # text to look for in the console to know when the server is finished loading
     # if the start_indicator is None, this server doesn't have a way to know when it is done starting.
     # this can also be an empty string to indicate that the status will be set manually, like through a plugin or mod.
-    start_indicator: Setting[str] = None
+    start_indicator: Setting[str | None] = None
 
     # whether or not this server should start as soon as soon as it is loaded
     auto_start: Setting[bool] = False
@@ -110,7 +112,7 @@ class GameServer:
         """
         self.storage_manager = storage_manager
 
-        self.process = None
+        self.process: subprocess.Popen[bytes] | None = None
         self.psutil = None
         self.status = GameServerStatus.STOPPED
         self.console = GameConsole(self)
@@ -121,7 +123,7 @@ class GameServer:
         for key, value in kwargs.items():
             # only set attributes which already exist
             # TODO disallow some attributes to be set, like methods or builtin python attributes
-            if hasattr(self, key):
+            if hasattr(self, key) or any([hasattr(clazz, "__annotations__") and key in clazz.__annotations__ for clazz in self.__class__.__mro__]):
                 setattr(self, key, value)
             else:
                 extra_data[key] = value
@@ -186,6 +188,9 @@ class GameServer:
         return True
 
     def stop_server(self):
+        if self.status == GameServerStatus.STOPPED:
+            return
+        assert self.process
         self.status = GameServerStatus.STOPPING
         if self.stop_command == "^C":
             utils.send_ctrl_c(self.process)
@@ -200,6 +205,8 @@ class GameServer:
         """
         if self.status == GameServerStatus.STOPPED:
             return
+        assert self.process
+        assert self.process.stdin
         self.process.stdin.write(f"{command}\n".encode("utf8"))
         self.process.stdin.flush()
 
@@ -222,7 +229,7 @@ class GameServer:
         self.storage_manager.remove_shared_file_from_server(self, file)
 
     # TODO this function is kinda a mess, clean up somehow?
-    def as_dict(self, include_metadata = False, flat = False, filter: MetadataFlags = None):
+    def as_dict(self, include_metadata = False, flat = False, filter: MetadataFlags | None = None):
         def empty_dict():
             return ValueMetadata(MetadataFlags.SETTINGS).as_dict({}) if include_metadata else {}
         
@@ -231,7 +238,7 @@ class GameServer:
 
 
         # TODO should the status be under stats?
-        data = {"server_data": empty_dict()} if not flat else {}
+        data: dict[str, Any] = {"server_data": empty_dict()} if not flat else {}
         
         # TODO this is kinda a scuffed way to do this
         for name, value, metadata, cls in ValueMetadata.iter_metadatas(self):
@@ -316,7 +323,9 @@ class GameServer:
         Constantly monitors the stdout of the subprocess, and adds it to the server's console object.
         Will block until the program exits, only call on another thread.
         """
+        assert self.process
         output = self.process.stderr if error else self.process.stdout
+        assert output is not None
         while self.process.poll() is None:
             line = output.readline().decode("utf8")
             if not line: # an empty line means eof, happens when a program writes eof before actually termainating
@@ -330,6 +339,7 @@ class GameServer:
         Blocks until the subprocess exits, then sets the status to stopped.
         Also will handle crashes if the server is not set to `STOPPING` when it exits.
         """
+        assert self.process
         self.process.wait()
         crash = self.status != GameServerStatus.STOPPING
         self.status = GameServerStatus.STOPPED
@@ -345,6 +355,7 @@ class GameServer:
         Looks for the start indicator in `line`.
         Used as console line listener, and doesn't handle special cases like the indicator being `None` or an empty string.
         """
+        assert self.start_indicator is not None
         if self.start_indicator not in event.line.line:
             return
         self.status = GameServerStatus.RUNNING
@@ -352,6 +363,7 @@ class GameServer:
         event.listener.deregister()
 
     def _kill_after_timeout(self):
+        assert self.process
         try:
             self.process.wait(self.stop_timeout)
         except subprocess.TimeoutExpired:
