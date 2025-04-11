@@ -94,7 +94,7 @@ async def set_password(token: Annotated[str, Depends(optional_auth)], server_man
     # that way we can use this endpoint during first time setup when there is no password
     if password_hash is not None:
         await get_current_user(token, token_secret)
-        if not pwd_context.verify(body.old_password, password_hash):
+        if body.old_password is None or not pwd_context.verify(body.old_password, password_hash):
             raise HTTPException(401, "Incorrect password", {"WWW-Authenticate": "Bearer"})
     server_manager.config.password_hash = pwd_context.hash(body.new_password)
 
