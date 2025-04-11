@@ -77,9 +77,8 @@ class ValueMetadata:
                 if not callable(method):
                     continue
                 annotations = inspect.get_annotations(method)
-                if 'return' not in annotations or not ValueMetadata.is_metadata(annotation):
+                if 'return' not in annotations or not ValueMetadata.is_metadata(annotation := annotations['return']):
                     continue
-                annotation = annotations['return']
                 metadata: ValueMetadata = annotation.__metadata__[0]
                 if filter and not filter(metadata):
                     continue
