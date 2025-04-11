@@ -211,6 +211,7 @@ class ServerManager:
                 servers = yaml.safe_load(file) or []
             except yaml.YAMLError as error:
                 print("Error reading servers.yml:", error)
+                return
         for server in servers:
             server_obj = self.create_server_obj(**server)
             self.servers.append(server_obj)
