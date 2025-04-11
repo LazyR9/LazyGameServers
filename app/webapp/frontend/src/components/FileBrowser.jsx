@@ -47,11 +47,23 @@ export default function ServerFileBrowser() {
 }
 
 function Directory({ directory, path }) {
+  const sortedFiles = directory.files;
+  sortedFiles.sort((a, b) => {
+    if (a.type === "DIRECTORY") {
+      if (b.type === "DIRECTORY") return 0;
+      else return -1;
+    } else if (b.type === "DIRECTORY") {
+      return 1;
+    }
+    if (a.name === b.name) return 0;
+    return a.name < b.name ? -1 : 1;
+  })
+  console.log(sortedFiles);
   return (
     <IconContext.Provider value={{ color: "#aaaaaa" }}>
       <ListGroup>
         {path !== '' && <FileItem file={{ name: "..", type: "DIRECTORY" }} />}
-        {directory.files.map(file => (
+        {sortedFiles.map(file => (
           <FileItem file={file} key={file.name} />
         ))}
       </ListGroup>
