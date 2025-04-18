@@ -3,6 +3,7 @@ import yaml
 import importlib.util
 from pathlib import Path
 
+from app import utils
 from app.management.config import Config, EnvConfig
 from app.management.metadata import MetadataFlags
 from app.management.storage import Directory, File, StorageManager
@@ -92,6 +93,8 @@ class ServerManager:
         
         self.version_manager = VersionManager()
 
+        self._autosave_timer = utils.RepeatedTimer(60 * 60, self._autosave)
+
     def register_class(self, game, class_, force = False):
         if not force and game in self.class_map:
             # TODO choose better exceptions. do i need to make my own or is there a better builtin one?
@@ -174,6 +177,11 @@ class ServerManager:
                 if cls.default_type is not None:
                     self.config.class_map[cls.default_type] = cls.__name__
                     self.register_class(cls.default_type, cls, False)
+        
+        # Apply new settings from the loaded config
+        self._autosave_timer.interval = self.config.autosave_interval
+        self._autosave_timer.stop()
+        self._autosave_timer.start()
 
     def reload_settings(self):
         with self.settings_yaml.open("rt") as file_io:
@@ -230,3 +238,8 @@ class ServerManager:
         plugins_dir.ensure_exists()
         # TODO improve the way plugins are loaded so that they can do more than just provide server types
         self.CLASSES += self.import_classes_from_directory(plugins_dir)
+    
+    def _autosave(self):
+        print("Auto saving...")
+        self.save_servers()
+        self.save_settings()

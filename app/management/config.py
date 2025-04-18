@@ -15,6 +15,8 @@ so that the new value can get set from the old one.
 class Config(BaseModel):
     class_map: dict[str, str] = {}
 
+    autosave_interval: int = 60 * 60
+
     password_hash: str | None = None
     setup: bool = False
 
