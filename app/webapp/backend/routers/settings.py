@@ -5,21 +5,26 @@ from app.management.version import Commit
 
 from ..dependencies import ManagerDependency
 
-    
+
 class VersionInfo(BaseModel):
     current: Commit
-    latest: Commit
+    latest: Commit | None
+    branch: str | None
     commits_behind: int
 
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
-
 @router.get("/version")
 def get_version(manager: ManagerDependency):
     version = manager.version_manager
-    ref = version.git_repo.head.ref
-    return VersionInfo(current=version.get_commit(ref), latest=version.get_commit(ref.tracking_branch()), commits_behind=version.get_commits_behind())
+    head = version.git_repo.head
+    if head.is_detached:
+        return VersionInfo(current=version.get_commit(head.commit), latest=None, branch=None, commits_behind=0)
+    ref = head.ref
+    remote = ref.tracking_branch()
+    latest = version.get_commit(remote) if remote is not None else None
+    return VersionInfo(current=version.get_commit(ref), latest=latest, branch=ref.name, commits_behind=version.get_commits_behind())
 
 @router.post("/version/check")
 def check_for_updates(manager: ManagerDependency):

@@ -3,7 +3,7 @@
     cursor: help;
 }
 
-.version-tooltip {
+.unlimited-tooltip-width {
     --bs-tooltip-max-width: 100vw;
 }
 
