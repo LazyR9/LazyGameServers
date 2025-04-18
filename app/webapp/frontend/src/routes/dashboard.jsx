@@ -57,7 +57,7 @@ export function NewServerButton() {
   return (
     <>
       <Button onClick={() => setShow(true)}>New</Button>
-      <Wizard show={show} onHide={() => setShow(false)} url="/api/ws/servers/create" host="localhost:8000" />
+      <Wizard show={show} onHide={() => setShow(false)} url="/api/ws/servers/create" />
     </>
   )
 }
