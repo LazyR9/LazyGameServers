@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# NOTE: This is an installer script that is written for mainly for one specific setup.
+# It isn't very cross platform, and probably does everything the worst way possible,
+# but if everything goes right, this will install everything with one command.
+# TODO see if there is a better way to handle installs
 import platform
 import secrets
 import shutil
@@ -37,6 +41,8 @@ if platform.system() == "Windows":
     print("Try installing on Linux instead!")
     exit(-1)
 
+CONF_DIR = "/opt/LazyGameServers/data"
+
 # map of dependency commands to whether or not they are required
 DEPENDENCIES = {
     "nginx": False,
@@ -63,6 +69,7 @@ CONFIG_REPLACABLE = {
     "EXTERNAL_PORT": EXTERNAL_PORT,
     "INTERNAL_PORT": INTERNAL_PORT,
     "FRONTEND_ASSETS_PATH": FRONTEND_ASSETS_PATH,
+    "CONF_DIR": CONF_DIR,
 }
 
 if not os.path.exists("venv"):
