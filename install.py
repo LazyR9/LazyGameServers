@@ -3,7 +3,6 @@
 # It isn't very cross platform, and probably does everything the worst way possible,
 # but if everything goes right, this will install everything with one command.
 # TODO see if there is a better way to handle installs
-import platform
 import secrets
 import shutil
 import os
@@ -36,7 +35,7 @@ def copy_with_replacements(input_filename, output_filename, replacements):
     with open(output_filename, "w") as output_file:
         output_file.writelines(output_file_contents)
 
-if platform.system() == "Windows":
+if os.name != "posix":
     print("Installer not available on Windows yet!")
     print("Try installing on Linux instead!")
     exit(-1)
