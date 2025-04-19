@@ -3,7 +3,7 @@ from fastapi import WebSocket
 from typing import Any, Callable, Collection, Iterable, TypeVar
 
 from .validators import ValidationError
-from .inputs import InputRequest, InputType
+from .inputs import InputRequest, InputType, Input
 
 T = TypeVar('T')
 
@@ -124,7 +124,7 @@ class WebsocketWizard(Wizard):
     def _get_request_json(request: InputRequest):
         return {
             "message": request.message,
-            "input_type": request.type.input_type.name if isinstance(request.type, InputType) else InputType.STRING.name,
+            "input_type": request.type.input_type.name if isinstance(request.type, Input) else InputType.STRING.name,
             "validation_data": request.get_validation_data()
         }
     
