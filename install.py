@@ -65,12 +65,19 @@ INTERNAL_PORT = 8000
 FRONTEND_ASSETS_PATH = "/var/www/html/lazy_game_servers"
 
 CONFIG_REPLACABLE = {
-    "CWD": os.getcwd(),
     "EXTERNAL_PORT": EXTERNAL_PORT,
     "INTERNAL_PORT": INTERNAL_PORT,
     "FRONTEND_ASSETS_PATH": FRONTEND_ASSETS_PATH,
     "CONF_DIR": CONF_DIR,
 }
+
+for key, value in CONFIG_REPLACABLE.items():
+    # this will replace int variables to a string,
+    # but since they are being inserted into a file they're convert to a string anyway
+    CONFIG_REPLACABLE[key] = input(f"Enter {key} [{value}]: ") or value
+
+# insert this after the loop, as this variable shouldn't been user controlled
+CONFIG_REPLACABLE["CWD"] = os.getcwd()
 
 if not os.path.exists("venv"):
     print("Creating venv...")
