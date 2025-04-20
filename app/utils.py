@@ -50,6 +50,8 @@ class RepeatedTimer:
     def start(self):
         if not self.is_running:
             self._timer = Timer(self.interval, self._run)
+            # set as daemon, so that autosave timer doesn't block the program from exiting
+            self._timer.daemon = True
             self._timer.start()
             self.is_running = True
 
