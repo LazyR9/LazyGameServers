@@ -1,4 +1,5 @@
 import shlex
+import shutil
 import subprocess
 import sys
 import signal
@@ -59,3 +60,36 @@ class RepeatedTimer:
         if self._timer is not None:
             self._timer.cancel()
         self.is_running = False
+
+def is_changing_user_supported():
+    """
+    Checks whether changing the user is supported
+    by checking if `os.setreuid` exists,
+    which is the same check `subprocess.Popen` uses.
+
+    :return: Whether a process can change the user running it on this platform.
+    """
+    return hasattr(os, 'setreuid')
+
+def chown_file(file: str, user: str, group: str | None = None):
+    """
+    Changes the owner of `file` to `user`.
+    This can also optionally change the group to `group`.
+    
+    Note that the return value is NOT success,
+    it is whether the operation is supported on this platform.
+    If the operation is unsuccessful, an error will be throw.
+
+    :param file: The path of the file to change ownership.
+    :param user: The user to give ownership to.
+    :param group: The group to give ownership to.
+        Can be `None`, meaning not to change the group.
+    :return: True if changing ownership is supported, False otherwise.
+        Note that this will ALWAYS return `True` on supported platforms,
+        reguardless of if the operation was actually successful.
+    """
+    # this check is here because shutil internally calls os.chown.
+    if hasattr(os, 'chown'):
+        shutil.chown(file, user, group)
+        return True
+    return False

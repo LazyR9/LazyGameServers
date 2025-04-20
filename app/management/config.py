@@ -17,6 +17,8 @@ class Config(BaseModel):
 
     autosave_interval: int = 60 * 60
 
+    subprocess_user: str = "LazyGameServers"
+
     password_hash: str | None = None
     setup: bool = False
 

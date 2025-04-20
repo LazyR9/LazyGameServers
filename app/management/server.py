@@ -179,7 +179,14 @@ class GameServer:
         if self.status != GameServerStatus.STOPPED:
             return False
         self.status = GameServerStatus.STARTING if self.start_indicator is not None else GameServerStatus.RUNNING
-        self.process = subprocess.Popen(self.get_command(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.get_directory().path)
+        self.process = subprocess.Popen(
+            self.get_command(),
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=self.get_directory().path,
+            user=self.config.subprocess_user if utils.is_changing_user_supported() else None
+        )
         self.ps = psutil.Process(self.process.pid)
         self.console.clear()
         if self.start_indicator:

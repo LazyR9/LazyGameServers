@@ -140,6 +140,7 @@ class StorageManager:
         if os.path.exists(folder):
             raise FileExistsError(f"Unable to create server: {folder} already exists")
         os.makedirs(folder)
+        utils.chown_file(folder, server.config.subprocess_user)
 
     # TODO have a class for symlinks to make these two functions easier
     def add_shared_file_to_server(self, game: str, bin: str, file: str, server: 'GameServer', dest_name: str | None = None): # seperate game for file and server, helpful because sub games are a thing

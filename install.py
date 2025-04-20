@@ -3,6 +3,7 @@
 # It isn't very cross platform, and probably does everything the worst way possible,
 # but if everything goes right, this will install everything with one command.
 # TODO see if there is a better way to handle installs
+import pwd
 import secrets
 import shutil
 import os
@@ -42,6 +43,8 @@ if os.name != "posix":
 
 CONF_DIR = "/opt/LazyGameServers/data"
 
+USER = "LazyGameServers"
+
 # map of dependency commands to whether or not they are required
 DEPENDENCIES = {
     "nginx": False,
@@ -68,7 +71,14 @@ CONFIG_REPLACABLE = {
     "INTERNAL_PORT": INTERNAL_PORT,
     "FRONTEND_ASSETS_PATH": FRONTEND_ASSETS_PATH,
     "CONF_DIR": CONF_DIR,
+    "USER": USER,
 }
+
+try:
+    pwd.getpwnam(USER)
+except KeyError:
+    print(f"User {USER} doesn't exist, creating it!")
+    subprocess.run(['useradd', '-r', USER])
 
 for key, value in CONFIG_REPLACABLE.items():
     # this will replace int variables to a string,
