@@ -143,7 +143,7 @@ class ServerManager:
                 break
         else:
             found_class = GameServer
-        server = found_class(self.storage_manager, **kwargs, game=game)
+        server = found_class(self.config, self.storage_manager, **kwargs, game=game)
         return server
 
     def auto_start_servers(self):
@@ -202,6 +202,9 @@ class ServerManager:
         self.class_map.clear()
         for game, class_ in self.config.class_map.items():
             self.register_class(game, self.get_class(class_), True)
+
+        for server in self.servers:
+            server.config = self.config
 
     def save_settings(self):
         if not self.should_save_config:

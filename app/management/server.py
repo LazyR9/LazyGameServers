@@ -1,7 +1,7 @@
 import subprocess
 import psutil
 from threading import Thread
-from typing import Annotated, Any
+from typing import Annotated, Any, TYPE_CHECKING
 from enum import Enum, auto
 import datetime
 
@@ -9,6 +9,9 @@ from app import utils
 from app.management.events import ConsoleClearEvent, ConsoleLineEvent, GameServerEvent, GameServerEventListener, GameServerEventType, StatusEvent
 from app.management.metadata import MetadataFlags, Setting, ValueMetadata
 from app.management.storage import StorageManager
+
+if TYPE_CHECKING:
+    from app.management.config import Config
 
 # TODO this can support anything that is run through the command line,
 # should i be naming everything with "Game"? 
@@ -94,7 +97,7 @@ class GameServer:
     # name of folders that hold other files and folders to be shared across server instances
     BINS = []
 
-    def __init__(self, storage_manager: StorageManager, **kwargs):
+    def __init__(self, config: 'Config', storage_manager: StorageManager, **kwargs):
         """
         Creates a new server object.
         
@@ -110,6 +113,7 @@ class GameServer:
         :param stop_command: The input to send to the stdin of the process, defaults to the class attribute of the same name
         :param start_indicator: What text to look for in the output that signals that the server is fully started, defaults to the class attribute of the same name
         """
+        self.config = config
         self.storage_manager = storage_manager
 
         self.process: subprocess.Popen[bytes] | None = None
