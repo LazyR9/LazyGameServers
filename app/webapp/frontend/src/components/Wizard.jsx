@@ -77,9 +77,12 @@ export default function Wizard({ show, onHide, url, host }) {
   const [retries, setRetries] = useState({});
   const [shouldReconnect, setShouldReconnect] = useState(true);
 
+  const finalHost = host || (process.env.NODE_ENV !== "development" ? window.location.host : "localhost:8000");
+  const fullUrl = (window.location.protocol === "https" ? "wss" : "ws") + '//' + finalHost + url;
+
   const { auth } = useAuth();
   const refreshToken = useAuthRefreshToken();
-  const { sendJsonMessage } = useWebSocket(window.location.protocol.replace(/^http/, 'ws') + '//' + (host || window.location.host) + url, {
+  const { sendJsonMessage } = useWebSocket(fullUrl, {
     onMessage: (event) => {
       const data = JSON.parse(event.data);
       setLoading(false);
