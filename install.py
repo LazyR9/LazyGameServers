@@ -74,12 +74,6 @@ CONFIG_REPLACABLE = {
     "USER": USER,
 }
 
-try:
-    pwd.getpwnam(USER)
-except KeyError:
-    print(f"User {USER} doesn't exist, creating it!")
-    subprocess.run(['useradd', '-r', USER])
-
 for key, value in CONFIG_REPLACABLE.items():
     # this will replace int variables to a string,
     # but since they are being inserted into a file they're convert to a string anyway
@@ -87,6 +81,12 @@ for key, value in CONFIG_REPLACABLE.items():
 
 # insert this after the loop, as this variable shouldn't been user controlled
 CONFIG_REPLACABLE["CWD"] = os.getcwd()
+
+try:
+    pwd.getpwnam(USER)
+except KeyError:
+    print(f"User {USER} doesn't exist, creating it!")
+    subprocess.run(['useradd', '-r', USER])
 
 if not os.path.exists("venv"):
     print("Creating venv...")
