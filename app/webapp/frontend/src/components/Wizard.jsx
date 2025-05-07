@@ -78,7 +78,7 @@ export default function Wizard({ show, onHide, url, host }) {
   const [shouldReconnect, setShouldReconnect] = useState(true);
 
   const finalHost = host || (process.env.NODE_ENV !== "development" ? window.location.host : "localhost:8000");
-  const fullUrl = (window.location.protocol === "https" ? "wss" : "ws") + '//' + finalHost + url;
+  const fullUrl = (window.location.protocol === "https" ? "wss" : "ws") + '://' + finalHost + url;
 
   const { auth } = useAuth();
   const refreshToken = useAuthRefreshToken();
