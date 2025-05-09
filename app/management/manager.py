@@ -233,8 +233,9 @@ class ServerManager:
 
     def save_servers(self):
         self.servers_yaml.ensure_parent_exists()
+        servers_data = [s.as_dict(flat=True, filter=MetadataFlags.SETTINGS) for s in self.servers]
         with self.servers_yaml.open("w") as file:
-            yaml.safe_dump([s.as_dict(flat=True, filter=MetadataFlags.SETTINGS) for s in self.servers], file, sort_keys=False)
+            yaml.safe_dump(servers_data, file, sort_keys=False)
 
     def load_plugins(self):
         plugins_dir = self.storage_manager.base_dir.get_directory("plugins")
